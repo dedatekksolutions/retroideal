@@ -35,10 +35,7 @@ body {
     color: white;
     font-weight: bold;
     cursor: pointer;
-    /* Adjust margin and width for responsiveness */
-    margin-left: auto;
-    margin-right: auto;
-    width: 50%;
+    align-self: center; /* Center the button horizontally */
 }
 
 .login-form {
@@ -64,11 +61,83 @@ body {
     margin-bottom: 20px; /* Adjust this margin to create space between the password field and the button */
 }
 
-/* Other styles remain unchanged */
+footer {
+    background-color: white;
+    padding: 20px;
+    text-align: center;
+    color: black; /* Font color set to black */
+}
+
+table {
+    color: black; /* Font color of the table content set to black */
+}
+
+@keyframes animateBackground {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 100% 100%;
+    }
+}
+
+body.index {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #2b001a; /* Cherry black color */
+    position: relative;
+    animation: animateBackground 20s ease infinite;
+    background-image: linear-gradient(45deg, #2b001a 25%, transparent 25%, transparent 50%, #2b001a 50%, #2b001a 75%, transparent 75%, transparent);
+    background-size: 40px 40px;
+}
+
+.login-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.1);
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Styling for the login button on hover */
+body.index .login-button:hover {
+    opacity: 0; /* Set opacity to 0 on hover to make it disappear */
+}
 
 /* Media query for responsiveness */
 @media screen and (max-width: 768px) {
-    .login-button {
+    .login-form {
         width: 80%; /* Adjust the width for smaller screens */
     }
+
+    .login-button {
+        margin-top: 10px; /* Adjust the margin for smaller screens */
+    }
+}
+
+.register-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.2); /* Translucent background color */
+    color: rgba(255, 255, 255, 0.5); /* Translucent text color */
+    font-weight: bold;
+    text-decoration: none;
+    transition: opacity 0.3s ease; /* Transition for opacity change */
+}
+
+.register-button:hover {
+    opacity: 0; /* Set opacity to 0 on hover to make it disappear */
 }

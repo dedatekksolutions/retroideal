@@ -21,15 +21,20 @@ def display_users():
     users = fetch_users()
     return render_template('login.html', users=users)
 
+
+###################################HELPERS#############################################
+def fetch_user_by_username(username):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(user_table)
+    response = table.get_item(Key={"username": username})
+    return response.get("Item")
+
+
 def fetch_users():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(user_table)
     response = table.scan()
     return response['Items']
-
-
-
-
 
 
 
