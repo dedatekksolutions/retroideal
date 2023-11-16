@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 flask_app_user="retroideal-flask"
 member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
-
+user_table="retroideal-user-credentials"
 
 @app.route("/")
 def hello():
@@ -16,8 +16,17 @@ def hello():
 def init():
     user_arn = get_user_arn(flask_app_user)
     check_user_existence(flask_app_user)
-    check_s3_bucket(member_vehicle_images_bucket_name, user_arn)  
+    check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
+    check_dynamodb_table_exists(user_table, user_arn)  # Pass user_arn here
     print("Application initialized!")
+
+
+#get user arn for creating resources
+def get_user_arn(username):
+    iam = boto3.client('iam')
+    response = iam.get_user(UserName=username)
+    user_arn = response['User']['Arn']
+    return user_arn
 
 #check if iam user exists
 def check_user_existence(username):
@@ -54,12 +63,6 @@ def check_s3_bucket(bucket_name, user_arn):  # Modify the function to accept use
             # Handle other errors if needed
             raise
 
-def get_user_arn(username):
-    iam = boto3.client('iam')
-    response = iam.get_user(UserName=username)
-    user_arn = response['User']['Arn']
-    return user_arn
-
 
 def create_s3_bucket(bucket_name, user_arn):
     s3 = boto3.client('s3')
@@ -92,6 +95,92 @@ def create_s3_bucket(bucket_name, user_arn):
             print(f"Error creating bucket '{bucket_name}': {e}")
 
 
+def check_dynamodb_table_exists(table_name, user_arn):
+    dynamodb = boto3.client('dynamodb')
+    try:
+        response = dynamodb.describe_table(TableName=table_name)
+        print(f"DynamoDB table '{table_name}' exists.")
+        return True
+    except dynamodb.exceptions.ResourceNotFoundException:
+        print(f"DynamoDB table '{table_name}' does not exist.")
+        create_dynamodb_user_table(table_name, user_arn)  # Pass user_arn here
+        print(f"DynamoDB table '{table_name}' created.")
+        return False
+
+
+def create_dynamodb_user_table(table_name, user_arn):
+    dynamodb = boto3.client('dynamodb')
+    app_user_arn = get_user_arn(flask_app_user)
+
+    try:
+        response = dynamodb.create_table(
+            TableName=table_name,
+            KeySchema=[
+                {
+                    'AttributeName': 'userid',
+                    'KeyType': 'HASH'  # Partition key
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'userid',
+                    'AttributeType': 'S'  # String
+                },
+                {
+                    'AttributeName': 'email',
+                    'AttributeType': 'S'  # String
+                }
+                # Add other attribute definitions here as needed
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5
+            },
+            # Define access permissions for the app's IAM user
+            # Replace 'YOUR_APP_ARN' with the actual ARN of the app's IAM user
+            # Ensure to provide necessary permissions as required
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'EmailIndex',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'email',
+                            'KeyType': 'HASH'  # Partition key
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5
+                    }
+                }
+            ]
+        )
+
+        # Wait for table creation to be active
+        dynamodb.get_waiter('table_exists').wait(TableName=table_name)
+        print(f"DynamoDB table '{table_name}' created successfully.")
+
+        # Define the policy granting access to the app's IAM user
+        table_policy = {
+            'Version': '2012-10-17',
+            'Statement': [{
+                'Effect': 'Allow',
+                'Principal': {'AWS': user_arn},
+                'Action': ['dynamodb:Query', 'dynamodb:Scan', 'dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
+                'Resource': f'arn:aws:dynamodb:*:*:table/{table_name}'
+            }]
+        }
+
+        # Apply the policy to the table
+        table_policy_str = str(table_policy).replace("'", '"')
+        dynamodb.put_table_policy(TableName=table_name, PolicyName='AppAccessPolicy', PolicyDocument=table_policy_str)
+        print(f"Permissions granted for the app user to read and write to the table.")
+
+    except dynamodb.exceptions.ResourceInUseException:
+        print(f"DynamoDB table '{table_name}' already exists.")
 
 
 
