@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, request, url_for  # Include 'redirect' and 'url_for' here
+from boto3.dynamodb.conditions import Attr
 import boto3
 from botocore.exceptions import ClientError
 import secrets
@@ -10,6 +11,8 @@ app = Flask(__name__)
 flask_app_user="retroideal-flask"
 member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
 user_table="retroideal-user-credentials"
+app.secret_key = "GnmcfY6KMHui9qlFcxp8lDMGywKcdukrQQIiJ0nz"
+
 
 #####################################ROUTES##########################################
 @app.route("/")
@@ -21,23 +24,85 @@ def display_users():
     users = fetch_users()
     return render_template('login.html', users=users)
 
+from flask import session  # Include the session module from Flask
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        # Handle the login logic for POST requests
+        username = request.form["username"]
+        password = request.form["password"]
+
+        user = fetch_user_by_username(username)
+
+        if user:
+            stored_password_hash = user.get("passwordhash")
+            stored_salt = user.get("salt")
+
+            if verify_hash(password, stored_password_hash, stored_salt):
+                # If authentication is successful, store user information in the session
+                session["user"] = {
+                    "userid": user.get("userid"),
+                    "username": user.get("username"),
+                    # Add other user details as needed
+                }
+                # Redirect to the user page or any other route as needed
+                return redirect(url_for("user_page"))
+
+    # If login fails or user does not exist, redirect back to the login page
+    return redirect(url_for("display_users"))
+
+
+@app.route("/user_page")
+def user_page():
+    if "user" in session:  # Check if the user is logged in and their details are in the session
+        userid = session["user"]["userid"]  # Get the userid from the session
+
+        # Fetch user details from DynamoDB based on the userid
+        user = fetch_user_by_userid(userid)
+
+        if user:
+            # Extract the first name and last name
+            first_name = user.get("firstname")
+            last_name = user.get("lastname")
+
+            # Render the user-page.html template with user details
+            return render_template("user-page.html", first_name=first_name, last_name=last_name)
+        else:
+            # Handle scenario when the user doesn't exist or userid is not found
+            return "User not found"  # You can handle this as needed
+    else:
+        # Redirect the user to the login page or handle unauthorized access
+        return redirect(url_for("display_users"))  # You can adjust this to your login route
+
 
 ###################################HELPERS#############################################
 def fetch_user_by_username(username):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(user_table)
-    response = table.get_item(Key={"username": username})
-    return response.get("Item")
+    
+    response = table.scan(FilterExpression=Attr('username').eq(username))
+    items = response['Items']
+    
+    if items:
+        return items[0]  # Assuming usernames are unique; return the first match found
+    
+    return None  # If no match found
 
+def fetch_user_by_userid(userid):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(user_table)
+    
+    response = table.get_item(Key={'userid': userid})
+    user = response.get('Item')
+    
+    return user
 
 def fetch_users():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(user_table)
     response = table.scan()
     return response['Items']
-
-
-
 
 
 ########################################INIT########################################
@@ -48,7 +113,6 @@ def init():
     check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
     check_dynamodb_table_exists(user_table, user_arn)
     print("Application initialized!")
-
 
 #get user arn for creating resources
 def get_user_arn(username):
@@ -249,13 +313,20 @@ def generate_hash_with_salt(input_string):
     return hashed_result, salt
 
 def verify_hash(input_string, stored_hash, salt):
-    salted_string = input_string + salt
+    hash_object = hashlib.sha256()
+    input_with_salt = (input_string + salt).encode('utf-8')
+    
+    # Debugging: Print the intermediate hashed result for verification
+    hash_object.update(input_with_salt)
+    intermediate_hashed_result = hash_object.hexdigest()
+    print(f"Intermediate hashed result: {intermediate_hashed_result}")
 
     hash_object = hashlib.sha256()
-    hash_object.update(salted_string.encode('utf-8'))
+    hash_object.update(input_with_salt)
     hashed_result = hash_object.hexdigest()
 
     return hashed_result == stored_hash
+
 
 def add_initial_entries_to_table(table_name):
     dynamodb = boto3.resource('dynamodb')
@@ -271,7 +342,7 @@ def add_initial_entries_to_table(table_name):
     lastname1 = "testlastname1"
     address1 = "1 test st testville testies test 12345"
 
-    hashed_password1, salt1 = generate_hash_with_salt(password1)
+    hashed_password1, salt1 = generate_hash_with_salt(password1)  # Change to use the same hashing method
 
     item1 = {
         'userid': userid1,
@@ -295,7 +366,7 @@ def add_initial_entries_to_table(table_name):
     lastname2 = "testlastname0"
     address2 = "0 test st testville testies test 01234"
 
-    hashed_password2, salt2 = generate_hash_with_salt(password2)
+    hashed_password2, salt2 = generate_hash_with_salt(password2)  # Change to use the same hashing method
 
     item2 = {
         'userid': userid2,
@@ -314,6 +385,7 @@ def add_initial_entries_to_table(table_name):
     table.put_item(Item=item2)
 
     print("Initial entries added to DynamoDB table.")
+
 
 
 if __name__ == "__main__":

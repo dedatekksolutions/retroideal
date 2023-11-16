@@ -2,19 +2,17 @@
 <html>
 <head>
     <title>Retroideal</title>        
-
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-
 </head>
 <body>
     <div class="login-container">
         <div class="login-component">
             <h1>Login</h1>
-            <form class="login-form">
-                <input type="text" placeholder="Username" class="login-input"><br>
-                <input type="password" placeholder="Password" class="login-input"><br>
+            <form class="login-form" action="/login" method="POST">
+                <input type="text" placeholder="Username" class="login-input" name="username"><br>
+                <input type="password" placeholder="Password" class="login-input" name="password"><br>
                 <button type="submit" class="login-button">Login</button>
-            </form>
+            </form>         
         </div>
     </div>
 
@@ -42,5 +40,8 @@
             {% endfor %}
         </table>
     </footer>
+
+    <!-- Added register button -->
+    <a href="/register" class="register-button">Register</a>
 </body>
 </html>
