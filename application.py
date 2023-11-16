@@ -329,7 +329,7 @@ def check_table_entries(table_name, user_arn):
             if table_name == user_table:
                 add_initial_user_entries_to_table(table_name)
             elif table_name == vehicle_table:  # Assuming you have a variable named vehicle_table with the stored value
-                add_initial_vehicle_entries_to_table(vehicle_table, "user_id_1", "user_id_2")
+                add_initial_vehicle_entries_to_table(vehicle_table, "0123456789", "1234567890")
             else:
                 print("Table name doesn't match user_table or vehicle_table. No action taken.")
         else:
@@ -375,7 +375,7 @@ def add_initial_user_entries_to_table(table_name):
     table = dynamodb.Table(table_name)
 
     # Entry 1
-    userid1 = str(uuid.uuid4())
+    userid1 = "12534567890"
     password1 = "testpassword1"
     email1 = "email1@email.com"
     phone1 = "1234567890"
@@ -399,7 +399,7 @@ def add_initial_user_entries_to_table(table_name):
     }
 
     # Entry 2
-    userid2 = str(uuid.uuid4())
+    userid2 = "0123456789"
     password2 = "testpassword0"
     email2 = "email0@email.com"
     phone2 = "0123456789"
