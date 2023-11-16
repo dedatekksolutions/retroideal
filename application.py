@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 import boto3
 from botocore.exceptions import ClientError
 import secrets
@@ -21,18 +21,59 @@ def display_users():
     users = fetch_users()
     return render_template('login.html', users=users)
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        user = fetch_user_by_username(username)
+
+        if user:
+            stored_hash = user.get("passwordhash")
+            salt = user.get("salt")
+            if verify_hash(password, stored_hash, salt):
+                return redirect(url_for("user_page"))
+            else:
+                # Incorrect password, handle accordingly (e.g., render login template again with an error message)
+                return render_template("login.html", error="Invalid credentials. Please try again.")
+        else:
+            # Username not found, handle accordingly (e.g., render login template again with an error message)
+            return render_template("login.html", error="Username not found. Please register.")
+
+    return render_template("login.html")
+
+@app.route("/user-page")
+def user_page():
+    return render_template("user-page.html", message="User Page")
+
+
+###################################HELPERS#############################################
+def fetch_user_by_username(username):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(user_table)
+    
+    # Define the query parameters based on the table schema
+    try:
+        response = table.scan(FilterExpression=Attr('username').eq(username))
+        items = response['Items']
+        
+        if items:  # Check if items are found
+            return items[0]  # Return the first matching item (assuming username is unique)
+        else:
+            return None  # Return None if no matching user found
+
+    except dynamodb.meta.client.exceptions.ResourceNotFoundException:
+        print(f"DynamoDB table '{user_table}' does not exist.")
+    except Exception as e:
+        print(f"An error occurred while scanning DynamoDB table '{user_table}': {e}")
+
+
+
 def fetch_users():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(user_table)
     response = table.scan()
     return response['Items']
-
-
-
-
-
-
-
 
 
 ########################################INIT########################################
