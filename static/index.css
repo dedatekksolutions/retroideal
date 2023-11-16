@@ -1,0 +1,43 @@
+/* Global body styles */
+body {
+    background-color: #2b001a; /* Cherry black color */
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    animation: animateBackground 20s ease infinite;
+    background-image: linear-gradient(45deg, #2b001a 25%, transparent 25%, transparent 50%, #2b001a 50%, #2b001a 75%, transparent 75%, transparent);
+    background-size: 40px 40px;
+}
+
+/* Styling for the login button on index.html */
+.login-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.1);
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Styling for the login button on hover in index.html */
+body.index .login-button:hover {
+    opacity: 0; /* Set opacity to 0 on hover to make it disappear */
+}
+
+/* Animation for the background gradient */
+@keyframes animateBackground {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 100% 100%;
+    }
+}

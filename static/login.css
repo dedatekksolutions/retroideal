@@ -1,0 +1,134 @@
+/* Global body styles */
+body {
+    background-color: #020202; /* Light gray background */
+    color: #333; /* Darker text color */
+    margin: 0;
+    font-family: Arial, sans-serif; /* Change to your preferred font */
+    line-height: 1.6;
+}
+
+/* Common styles for links */
+a {
+    color: #007bff; /* Blue link color */
+    text-decoration: none;
+    transition: color 0.3s ease; /* Smooth color transition on hover */
+}
+
+a:hover {
+    color: #0056b3; /* Darker blue on hover */
+}
+
+/* Styling for headings */
+h1, h2, h3 {
+    color: #333;
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 2em;
+    margin-bottom: 15px;
+}
+
+h3 {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+}
+
+/* General container styles */
+.container {
+    width: 80%;
+    margin: 0 auto; /* Center content */
+    padding: 20px 0;
+}
+
+/* Button styles */
+.button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff; /* Blue button */
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Smooth background transition */
+}
+
+.button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+/* General styles for paragraphs */
+p {
+    font-size: 1.2em;
+    color: #444;
+    margin-bottom: 15px;
+}
+
+.login-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-component {
+    background-color: #292929;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px 0px rgba(255, 255, 255, 0.2);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative; 
+}
+
+.login-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background-color: #0c0c0c;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    align-self: center; /* Center the button horizontally */
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px; /* Adjust this margin to create space between the password field and the button */
+}
+
+.login-input {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    width: 100%;
+}
+
+.login-button:hover {
+    background-color: #8a8a8a;
+}
+
+.login-input:last-child {
+    margin-bottom: 20px; /* Adjust this margin to create space between the password field and the button */
+}
+
+footer {
+    background-color: white;
+    padding: 20px;
+    text-align: center;
+    color: black; /* Font color set to black */
+}
+
+table {
+    color: black; /* Font color of the table content set to black */
+}
