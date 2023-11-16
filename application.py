@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, redirect, request, url_for  # Include 'redirect' and 'url_for' here
+from boto3.dynamodb.conditions import Attr
 import boto3
 from botocore.exceptions import ClientError
 import secrets
@@ -21,51 +22,46 @@ def display_users():
     users = fetch_users()
     return render_template('login.html', users=users)
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["POST"])
 def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        user = fetch_user_by_username(username)
+    username = request.form["username"]
+    password = request.form["password"]
 
-        if user:
-            stored_hash = user.get("passwordhash")
-            salt = user.get("salt")
-            if verify_hash(password, stored_hash, salt):
-                return redirect(url_for("user_page"))
-            else:
-                # Incorrect password, handle accordingly (e.g., render login template again with an error message)
-                return render_template("login.html", error="Invalid credentials. Please try again.")
-        else:
-            # Username not found, handle accordingly (e.g., render login template again with an error message)
-            return render_template("login.html", error="Username not found. Please register.")
+    print(f"Received username: {username}")
+    print(f"Received password: {password}")
 
-    return render_template("login.html")
+    user = fetch_user_by_username(username)
+    if user:
+        stored_password_hash = user.get("passwordhash")
+        stored_salt = user.get("salt")
+        print(f"Stored password hash: {stored_password_hash}")
+        print(f"Stored salt: {stored_salt}")
+        
+        if verify_hash(password, stored_password_hash, stored_salt):
+            # Password verified, redirect to user page
+            print(f"User '{username}' logged in successfully")
+            return redirect(url_for("user_page"))  # The error is likely here
+    
+    # If login fails, redirect back to the login page
+    print(f"Login failed for user '{username}'")
+    return redirect(url_for("display_users"))
 
-@app.route("/user-page")
+@app.route("/user_page")
 def user_page():
-    return render_template("user-page.html", message="User Page")
-
+    return render_template("user-page.html")
 
 ###################################HELPERS#############################################
 def fetch_user_by_username(username):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(user_table)
     
-    # Define the query parameters based on the table schema
-    try:
-        response = table.scan(FilterExpression=Attr('username').eq(username))
-        items = response['Items']
-        
-        if items:  # Check if items are found
-            return items[0]  # Return the first matching item (assuming username is unique)
-        else:
-            return None  # Return None if no matching user found
-
-    except dynamodb.meta.client.exceptions.ResourceNotFoundException:
-        print(f"DynamoDB table '{user_table}' does not exist.")
-    except Exception as e:
-        print(f"An error occurred while scanning DynamoDB table '{user_table}': {e}")
+    response = table.scan(FilterExpression=Attr('username').eq(username))
+    items = response['Items']
+    
+    if items:
+        return items[0]  # Assuming usernames are unique; return the first match found
+    
+    return None  # If no match found
 
 
 
@@ -285,13 +281,20 @@ def generate_hash_with_salt(input_string):
     return hashed_result, salt
 
 def verify_hash(input_string, stored_hash, salt):
-    salted_string = input_string + salt
+    hash_object = hashlib.sha256()
+    input_with_salt = (input_string + salt).encode('utf-8')
+    
+    # Debugging: Print the intermediate hashed result for verification
+    hash_object.update(input_with_salt)
+    intermediate_hashed_result = hash_object.hexdigest()
+    print(f"Intermediate hashed result: {intermediate_hashed_result}")
 
     hash_object = hashlib.sha256()
-    hash_object.update(salted_string.encode('utf-8'))
+    hash_object.update(input_with_salt)
     hashed_result = hash_object.hexdigest()
 
     return hashed_result == stored_hash
+
 
 def add_initial_entries_to_table(table_name):
     dynamodb = boto3.resource('dynamodb')
@@ -307,7 +310,7 @@ def add_initial_entries_to_table(table_name):
     lastname1 = "testlastname1"
     address1 = "1 test st testville testies test 12345"
 
-    hashed_password1, salt1 = generate_hash_with_salt(password1)
+    hashed_password1, salt1 = generate_hash_with_salt(password1)  # Change to use the same hashing method
 
     item1 = {
         'userid': userid1,
@@ -331,7 +334,7 @@ def add_initial_entries_to_table(table_name):
     lastname2 = "testlastname0"
     address2 = "0 test st testville testies test 01234"
 
-    hashed_password2, salt2 = generate_hash_with_salt(password2)
+    hashed_password2, salt2 = generate_hash_with_salt(password2)  # Change to use the same hashing method
 
     item2 = {
         'userid': userid2,
@@ -350,6 +353,7 @@ def add_initial_entries_to_table(table_name):
     table.put_item(Item=item2)
 
     print("Initial entries added to DynamoDB table.")
+
 
 
 if __name__ == "__main__":
