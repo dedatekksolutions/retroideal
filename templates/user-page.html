@@ -61,30 +61,39 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <header class="navbar">
-        <!-- Your navigation bar content -->
         <span style="font-size:30px;cursor:pointer" onclick="openSidePanel()">&#9776;</span>
     </header>
-
-    <!-- Side panel -->
     <div class="side-panel" id="sidePanel">
         <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
-        <!-- Side panel content -->
         <a href="#">Option 1</a>
         <a href="#">Option 2</a>
         <a href="#">Option 3</a>
     </div>
-
-    <!-- Page content -->
     <div class="content">
         <h1>Welcome {{ first_name }} {{ last_name }}</h1>
         <p>You are logged in.</p>
+        <h2>Your Vehicles</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>VIN</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehicle in vehicles %}
+                <tr>
+                    <td>{{ vehicle.vin }}</td>
+                    <td>{{ vehicle.make }}</td>
+                    <td>{{ vehicle.model }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-
-    <!-- Footer -->
     <div class="footer">
-        <!-- Your footer content -->
         &copy; 2023 Your Company
     </div>
 

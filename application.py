@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, request, url_for  # Include 'redirect' and 'url_for' here
+from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Attr
 import boto3
 from botocore.exceptions import ClientError
@@ -11,6 +12,7 @@ app = Flask(__name__)
 flask_app_user="retroideal-flask"
 member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
 user_table="retroideal-user-credentials"
+vehicle_table="retroideal-vehicle-table"
 app.secret_key = "GnmcfY6KMHui9qlFcxp8lDMGywKcdukrQQIiJ0nz"
 
 
@@ -52,28 +54,29 @@ def login():
     # If login fails or user does not exist, redirect back to the login page
     return redirect(url_for("display_users"))
 
-
 @app.route("/user_page")
 def user_page():
-    if "user" in session:  # Check if the user is logged in and their details are in the session
-        userid = session["user"]["userid"]  # Get the userid from the session
-
-        # Fetch user details from DynamoDB based on the userid
+    if "user" in session:
+        userid = session["user"]["userid"]
         user = fetch_user_by_userid(userid)
-
+        
         if user:
-            # Extract the first name and last name
             first_name = user.get("firstname")
             last_name = user.get("lastname")
 
-            # Render the user-page.html template with user details
-            return render_template("user-page.html", first_name=first_name, last_name=last_name)
+            print("User:", userid)
+
+            # Fetch vehicles for the current user
+            user_vehicles = fetch_vehicles_by_userid(userid)
+
+            # Add print statement to display fetched vehicles
+            print("Vehicles fetched:", user_vehicles)
+
+            return render_template("user-page.html", first_name=first_name, last_name=last_name, vehicles=user_vehicles)
         else:
-            # Handle scenario when the user doesn't exist or userid is not found
-            return "User not found"  # You can handle this as needed
+            return "User not found"
     else:
-        # Redirect the user to the login page or handle unauthorized access
-        return redirect(url_for("display_users"))  # You can adjust this to your login route
+        return redirect(url_for("display_users"))
 
 
 ###################################HELPERS#############################################
@@ -88,6 +91,20 @@ def fetch_user_by_username(username):
         return items[0]  # Assuming usernames are unique; return the first match found
     
     return None  # If no match found
+
+def fetch_vehicles_by_userid(userid):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(vehicle_table)
+
+    response = table.scan(FilterExpression=Attr('userid').eq(userid))
+    items = response.get('Items', [])
+
+    print(f"Retrieved vehicles for user with ID {userid}:")
+    for vehicle in items:
+        print(vehicle)  # Output each vehicle information retrieved from DynamoDB
+
+    return items
+
 
 def fetch_user_by_userid(userid):
     dynamodb = boto3.resource('dynamodb')
@@ -112,6 +129,7 @@ def init():
     check_user_existence(flask_app_user)
     check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
     check_dynamodb_table_exists(user_table, user_arn)
+    check_dynamodb_table_exists(vehicle_table, user_arn)
     print("Application initialized!")
 
 #get user arn for creating resources
@@ -196,11 +214,30 @@ def check_dynamodb_table_exists(table_name, user_arn):
         check_table_entries(user_table, user_arn)
         return True
     except dynamodb.exceptions.ResourceNotFoundException:
-        print(f"DynamoDB table '{table_name}' does not exist.")
-        create_dynamodb_user_table(table_name, user_arn)  # Pass user_arn here
-        print(f"DynamoDB table '{table_name}' created.")
-        return False
-
+        if table_name == user_table:
+            try:
+                response = dynamodb.describe_table(TableName=table_name)
+                print(f"DynamoDB table '{table_name}' exists.")
+                check_table_entries(user_table, user_arn)
+                return True
+            except dynamodb.exceptions.ResourceNotFoundException:
+                    print(f"DynamoDB table '{table_name}' does not exist.")
+                    create_dynamodb_user_table(table_name, user_arn)
+                    print(f"DynamoDB table '{table_name}' created.")
+        elif table_name == vehicle_table:  # Assuming you have a variable named vehicle_table with the stored value
+            try:
+                response = dynamodb.describe_table(TableName=table_name)
+                print(f"DynamoDB table '{table_name}' exists.")
+                check_table_entries(user_table, user_arn)
+                return True
+            except dynamodb.exceptions.ResourceNotFoundException:
+                    print(f"DynamoDB table '{table_name}' does not exist.")
+                    create_dynamodb_vehicle_table(table_name, user_arn)  # Pass user_arn here
+                    print(f"DynamoDB table '{table_name}' created.")
+        else:
+            print("Table name doesn't match user_table or vehicle_table. No action taken.")
+        return False  # Adjust the indentation here to match the try block
+    
 
 def create_dynamodb_user_table(table_name, user_arn):
     dynamodb = boto3.client('dynamodb')
@@ -279,7 +316,6 @@ def create_dynamodb_user_table(table_name, user_arn):
         print(f"DynamoDB table '{table_name}' already exists.")
         check_table_entries(user_table, user_arn)
         
-
 def check_table_entries(table_name, user_arn):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
@@ -290,7 +326,12 @@ def check_table_entries(table_name, user_arn):
 
         if not items:
             print(f"No entries found in DynamoDB table '{table_name}'.")
-            add_initial_entries_to_table(table_name)
+            if table_name == user_table:
+                add_initial_user_entries_to_table(table_name)
+            elif table_name == vehicle_table:  # Assuming you have a variable named vehicle_table with the stored value
+                add_initial_vehicle_entries_to_table(vehicle_table, "user_id_1", "user_id_2")
+            else:
+                print("Table name doesn't match user_table or vehicle_table. No action taken.")
         else:
             print(f"Entries found in DynamoDB table '{table_name}':")
             for item in items:
@@ -300,6 +341,7 @@ def check_table_entries(table_name, user_arn):
         print(f"DynamoDB table '{table_name}' does not exist.")
     except Exception as e:
         print(f"An error occurred while scanning DynamoDB table '{table_name}': {e}")
+
 
 def generate_hash_with_salt(input_string):
     salt = secrets.token_hex(16)  # Generate a random 128-bit salt (16 bytes)
@@ -328,7 +370,7 @@ def verify_hash(input_string, stored_hash, salt):
     return hashed_result == stored_hash
 
 
-def add_initial_entries_to_table(table_name):
+def add_initial_user_entries_to_table(table_name):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
 
@@ -385,6 +427,145 @@ def add_initial_entries_to_table(table_name):
     table.put_item(Item=item2)
 
     print("Initial entries added to DynamoDB table.")
+
+import boto3
+import uuid
+from datetime import datetime
+import random
+import string
+
+def create_dynamodb_vehicle_table(table_name, user_arn):
+    dynamodb = boto3.client('dynamodb')
+
+    try:
+        response = dynamodb.create_table(
+            TableName=table_name,
+            KeySchema=[
+                {
+                    'AttributeName': 'vh-id',
+                    'KeyType': 'HASH'  # Partition key
+                }
+            ],
+            AttributeDefinitions=[
+                {
+                    'AttributeName': 'vh-id',
+                    'AttributeType': 'S'  # String
+                },
+                {
+                    'AttributeName': 'userid',
+                    'AttributeType': 'S'
+                }
+                # Add other attribute definitions used in KeySchema or GlobalSecondaryIndexes
+            ],
+            ProvisionedThroughput={
+                'ReadCapacityUnits': 5,
+                'WriteCapacityUnits': 5
+            },
+            GlobalSecondaryIndexes=[
+                {
+                    'IndexName': 'UserIdIndex',
+                    'KeySchema': [
+                        {
+                            'AttributeName': 'userid',
+                            'KeyType': 'HASH'  # Partition key
+                        }
+                    ],
+                    'Projection': {
+                        'ProjectionType': 'ALL'
+                    },
+                    'ProvisionedThroughput': {
+                        'ReadCapacityUnits': 5,
+                        'WriteCapacityUnits': 5
+                    }
+                }
+            ]
+        )
+
+        # Wait for table creation to be active
+        dynamodb.get_waiter('table_exists').wait(TableName=table_name)
+        print(f"DynamoDB table '{table_name}' created successfully.")
+
+        # Define the policy granting access to the app's IAM user
+        # Apply the policy to the table (if the put_table_policy is available in your AWS version)
+
+        print(f"Permissions granted for the app user to read and write to the table.")
+
+        check_table_entries(table_name, user_arn)
+
+    except dynamodb.exceptions.ResourceInUseException:
+        print(f"DynamoDB table '{table_name}' already exists.")
+        check_table_entries(table_name, user_arn)
+
+
+def add_initial_vehicle_entries_to_table(table_name, userid1, userid2):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(table_name)
+
+    # Get the current year
+    current_year = datetime.now().year
+
+    # Calculate the year 25 years ago
+    year_25_years_ago = current_year - 25
+
+    # Create vehicles for user 1
+    for i in range(1, 4):
+        vehicle_year = year_25_years_ago - i  # Creating vehicles 25, 26, and 27 years old
+        vh_id = str(uuid.uuid4())
+        vin = f"VIN{i}"
+        chassis_no = f"Chassis{i}"
+        make = f"Make{i}"
+        model = f"Model{i}"
+        year = str(vehicle_year)
+        variant = f"Variant{i}"
+        date_joined = str(datetime.now())
+        reg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))  # Generate a 6-character alphanumeric string for reg
+
+        item = {
+            'vh-id': vh_id,
+            'vin': vin,
+            'chassisno': chassis_no,
+            'make': make,
+            'model': model,
+            'year': year,
+            'variant': variant,
+            'userid': userid1,
+            'datejoined': date_joined,
+            'reg': reg  # Add the 'reg' attribute to the item
+        }
+
+        # Only put the item if all attributes are included
+        table.put_item(Item=item)
+
+    # Create vehicles for user 2
+    for i in range(4, 7):
+        vehicle_year = year_25_years_ago - i  # Creating vehicles 28, 29, and 30 years old
+        vh_id = str(uuid.uuid4())
+        vin = f"VIN{i}"
+        chassis_no = f"Chassis{i}"
+        make = f"Make{i}"
+        model = f"Model{i}"
+        year = str(vehicle_year)
+        variant = f"Variant{i}"
+        date_joined = str(datetime.now())
+        reg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))  # Generate a 6-character alphanumeric string for reg
+
+        item = {
+            'vh-id': vh_id,
+            'vin': vin,
+            'chassisno': chassis_no,
+            'make': make,
+            'model': model,
+            'year': year,
+            'variant': variant,
+            'userid': userid2,
+            'datejoined': date_joined,
+            'reg': reg  # Add the 'reg' attribute to the item
+        }
+
+        # Only put the item if all attributes are included
+        table.put_item(Item=item)
+
+    print("Initial vehicles added to DynamoDB table.")
 
 
 
