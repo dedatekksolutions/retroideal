@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Retroideal</title>        
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-component">
+            <h1>Login</h1>
+            <form class="login-form">
+                <input type="text" placeholder="Username" class="login-input"><br>
+                <input type="password" placeholder="Password" class="login-input"><br>
+                <button type="submit" class="login-button">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <hr>
+        <h1>User Details</h1>
+        <table border="1">
+            <tr>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Username</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Address</th>
+            </tr>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.firstname }}</td>
+                <td>{{ user.lastname }}</td>
+                <td>{{ user.address }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </footer>
+</body>
+</html>

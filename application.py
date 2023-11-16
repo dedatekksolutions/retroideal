@@ -11,19 +11,31 @@ flask_app_user="retroideal-flask"
 member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
 user_table="retroideal-user-credentials"
 
+#####################################ROUTES##########################################
 @app.route("/")
+def index():
+    return render_template('index.html')
+    
+@app.route("/login")
 def display_users():
+    users = fetch_users()
+    return render_template('login.html', users=users)
+
+def fetch_users():
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(user_table)
-
-    # Get all items from the table
     response = table.scan()
+    return response['Items']
 
-    # Extract user details from the response
-    users = response['Items']
 
-    return render_template('index.html', users=users)
 
+
+
+
+
+
+
+########################################INIT########################################
 #initialise resources
 def init():
     user_arn = get_user_arn(flask_app_user)
@@ -240,18 +252,6 @@ def verify_hash(input_string, stored_hash, salt):
 
     return hashed_result == stored_hash
 
-# # Usage example
-# input_string = "your_input_string"  # Replace with your input string
-# stored_hash, salt = generate_hash_with_salt(input_string)
-
-# input_to_verify = "your_input_string"  # Replace with another input string
-# match = verify_hash(input_to_verify, stored_hash, salt)
-
-# if match:
-#     print("Hashes match. Verification successful.")
-# else:
-#     print("Hashes don't match. Verification failed.")
-
 def add_initial_entries_to_table(table_name):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
@@ -288,7 +288,7 @@ def add_initial_entries_to_table(table_name):
     username2 = "testuser0"
     firstname2 = "testfirstname0"
     lastname2 = "testlastname0"
-    address2 = "0 test st testville testies test 0123"
+    address2 = "0 test st testville testies test 01234"
 
     hashed_password2, salt2 = generate_hash_with_salt(password2)
 
