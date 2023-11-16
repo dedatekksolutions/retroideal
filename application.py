@@ -1,6 +1,9 @@
-from flask import Flask
+from flask import Flask, render_template
 import boto3
 from botocore.exceptions import ClientError
+import secrets
+import hashlib
+import uuid
 
 app = Flask(__name__)
 
@@ -9,15 +12,24 @@ member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
 user_table="retroideal-user-credentials"
 
 @app.route("/")
-def hello():
-    return "<h1 style='color:blue'>Hello There!</h1>"
+def display_users():
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(user_table)
+
+    # Get all items from the table
+    response = table.scan()
+
+    # Extract user details from the response
+    users = response['Items']
+
+    return render_template('index.html', users=users)
 
 #initialise resources
 def init():
     user_arn = get_user_arn(flask_app_user)
     check_user_existence(flask_app_user)
     check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
-    check_dynamodb_table_exists(user_table, user_arn)  # Pass user_arn here
+    check_dynamodb_table_exists(user_table, user_arn)
     print("Application initialized!")
 
 
@@ -100,6 +112,7 @@ def check_dynamodb_table_exists(table_name, user_arn):
     try:
         response = dynamodb.describe_table(TableName=table_name)
         print(f"DynamoDB table '{table_name}' exists.")
+        check_table_entries(user_table, user_arn)
         return True
     except dynamodb.exceptions.ResourceNotFoundException:
         print(f"DynamoDB table '{table_name}' does not exist.")
@@ -179,9 +192,123 @@ def create_dynamodb_user_table(table_name, user_arn):
         dynamodb.put_table_policy(TableName=table_name, PolicyName='AppAccessPolicy', PolicyDocument=table_policy_str)
         print(f"Permissions granted for the app user to read and write to the table.")
 
+        check_table_entries(user_table, user_arn)
+
     except dynamodb.exceptions.ResourceInUseException:
         print(f"DynamoDB table '{table_name}' already exists.")
+        check_table_entries(user_table, user_arn)
+        
 
+def check_table_entries(table_name, user_arn):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(table_name)
+    print(f"Test193")
+    try:
+        response = table.scan()
+        items = response.get('Items', [])
+
+        if not items:
+            print(f"No entries found in DynamoDB table '{table_name}'.")
+            add_initial_entries_to_table(table_name)
+        else:
+            print(f"Entries found in DynamoDB table '{table_name}':")
+            for item in items:
+                print(item)  
+
+    except dynamodb.meta.client.exceptions.ResourceNotFoundException:
+        print(f"DynamoDB table '{table_name}' does not exist.")
+    except Exception as e:
+        print(f"An error occurred while scanning DynamoDB table '{table_name}': {e}")
+
+def generate_hash_with_salt(input_string):
+    salt = secrets.token_hex(16)  # Generate a random 128-bit salt (16 bytes)
+
+    salted_string = input_string + salt
+
+    hash_object = hashlib.sha256()
+    hash_object.update(salted_string.encode('utf-8'))
+    hashed_result = hash_object.hexdigest()
+
+    return hashed_result, salt
+
+def verify_hash(input_string, stored_hash, salt):
+    salted_string = input_string + salt
+
+    hash_object = hashlib.sha256()
+    hash_object.update(salted_string.encode('utf-8'))
+    hashed_result = hash_object.hexdigest()
+
+    return hashed_result == stored_hash
+
+# # Usage example
+# input_string = "your_input_string"  # Replace with your input string
+# stored_hash, salt = generate_hash_with_salt(input_string)
+
+# input_to_verify = "your_input_string"  # Replace with another input string
+# match = verify_hash(input_to_verify, stored_hash, salt)
+
+# if match:
+#     print("Hashes match. Verification successful.")
+# else:
+#     print("Hashes don't match. Verification failed.")
+
+def add_initial_entries_to_table(table_name):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(table_name)
+
+    # Entry 1
+    userid1 = str(uuid.uuid4())
+    password1 = "testpassword1"
+    email1 = "email1@email.com"
+    phone1 = "1234567890"
+    username1 = "testuser1"
+    firstname1 = "testfirstname1"
+    lastname1 = "testlastname1"
+    address1 = "1 test st testville testies test 12345"
+
+    hashed_password1, salt1 = generate_hash_with_salt(password1)
+
+    item1 = {
+        'userid': userid1,
+        'passwordhash': hashed_password1,
+        'salt': salt1,
+        'email': email1,
+        'phone': phone1,
+        'username': username1,
+        'firstname': firstname1,
+        'lastname': lastname1,
+        'address': address1
+    }
+
+    # Entry 2
+    userid2 = str(uuid.uuid4())
+    password2 = "testpassword0"
+    email2 = "email0@email.com"
+    phone2 = "0123456789"
+    username2 = "testuser0"
+    firstname2 = "testfirstname0"
+    lastname2 = "testlastname0"
+    address2 = "0 test st testville testies test 0123"
+
+    hashed_password2, salt2 = generate_hash_with_salt(password2)
+
+    item2 = {
+        'userid': userid2,
+        'passwordhash': hashed_password2,
+        'salt': salt2,
+        'email': email2,
+        'phone': phone2,
+        'username': username2,
+        'firstname': firstname2,
+        'lastname': lastname2,
+        'address': address2
+    }
+
+    # Put items into the DynamoDB table
+    table.put_item(Item=item1)
+    table.put_item(Item=item2)
+
+    print("Initial entries added to DynamoDB table.")
 
 
 if __name__ == "__main__":
