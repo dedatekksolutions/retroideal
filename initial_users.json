@@ -1,0 +1,22 @@
+[
+    {
+        "userid": "12534567890",
+        "password": "testpassword1",
+        "email": "email1@email.com",
+        "phone": "1234567890",
+        "username": "testuser1",
+        "firstname": "testfirstname1",
+        "lastname": "testlastname1",
+        "address": "1 test st testville testies test 12345"
+    },
+    {
+        "userid": "0123456789",
+        "password": "testpassword0",
+        "email": "email0@email.com",
+        "phone": "0123456789",
+        "username": "testuser0",
+        "firstname": "testfirstname0",
+        "lastname": "testlastname0",
+        "address": "0 test st testville testies test 01234"
+    }
+]

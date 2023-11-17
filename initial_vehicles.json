@@ -1,0 +1,80 @@
+[
+    {
+        "vh_id": "1234",
+        "vin": "1HGCM82633A",
+        "chassisno": "AB123456789",
+        "make": "Honda",
+        "model": "Accord",
+        "year": "2010",
+        "variant": "Sedan",
+        "datejoined": "2023-11-16",
+        "reg": "ABC123",
+        "engine_no": "ABC12345",
+        "userid": "user1"
+    },
+    {
+        "vh_id": "5678",
+        "vin": "5YJSA1CN5DFP",
+        "chassisno": "CD987654321",
+        "make": "Tesla",
+        "model": "Model S",
+        "year": "2018",
+        "variant": "Electric",
+        "datejoined": "2023-11-16",
+        "reg": "XYZ789",
+        "engine_no": "XYZ98765",
+        "userid": "user2"
+    },
+    {
+        "vh_id": "91011",
+        "vin": "JM1CW2BL3C0111213",
+        "chassisno": "EF456789012",
+        "make": "Mazda",
+        "model": "CX-5",
+        "year": "2015",
+        "variant": "SUV",
+        "datejoined": "2023-11-16",
+        "reg": "DEF456",
+        "engine_no": "DEF67890",
+        "userid": "user1"
+    },
+    {
+        "vh_id": "121314",
+        "vin": "SAJWA2GB3BLV12345",
+        "chassisno": "GH678901234",
+        "make": "Jaguar",
+        "model": "XF",
+        "year": "2017",
+        "variant": "Luxury",
+        "datejoined": "2023-11-16",
+        "reg": "GHI789",
+        "engine_no": "GHI98765",
+        "userid": "user2"
+    },
+    {
+        "vh_id": "151617",
+        "vin": "JA32U8FW4AU812345",
+        "chassisno": "IJ901234567",
+        "make": "Mitsubishi",
+        "model": "Lancer",
+        "year": "2012",
+        "variant": "Compact",
+        "datejoined": "2023-11-16",
+        "reg": "IJK901",
+        "engine_no": "IJK12345",
+        "userid": "user1"
+    },
+    {
+        "vh_id": "181920",
+        "vin": "1C4RJFBGXEC812345",
+        "chassisno": "KL234567890",
+        "make": "Jeep",
+        "model": "Grand Cherokee",
+        "year": "2014",
+        "variant": "SUV",
+        "datejoined": "2023-11-16",
+        "reg": "KLM234",
+        "engine_no": "KLM56789",
+        "userid": "user2"
+    }
+]

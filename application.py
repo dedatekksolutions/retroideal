@@ -6,6 +6,10 @@ from botocore.exceptions import ClientError
 import secrets
 import hashlib
 import uuid
+import random
+import string
+import json
+import time
 
 app = Flask(__name__)
 
@@ -14,7 +18,6 @@ member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
 user_table="retroideal-user-credentials"
 vehicle_table="retroideal-vehicle-table"
 app.secret_key = "GnmcfY6KMHui9qlFcxp8lDMGywKcdukrQQIiJ0nz"
-
 
 #####################################ROUTES##########################################
 @app.route("/")
@@ -64,20 +67,14 @@ def user_page():
             first_name = user.get("firstname")
             last_name = user.get("lastname")
 
-            print("User:", userid)
-
             # Fetch vehicles for the current user
             user_vehicles = fetch_vehicles_by_userid(userid)
-
-            # Add print statement to display fetched vehicles
-            print("Vehicles fetched:", user_vehicles)
 
             return render_template("user-page.html", first_name=first_name, last_name=last_name, vehicles=user_vehicles)
         else:
             return "User not found"
     else:
         return redirect(url_for("display_users"))
-
 
 ###################################HELPERS#############################################
 def fetch_user_by_username(username):
@@ -98,13 +95,7 @@ def fetch_vehicles_by_userid(userid):
 
     response = table.scan(FilterExpression=Attr('userid').eq(userid))
     items = response.get('Items', [])
-
-    print(f"Retrieved vehicles for user with ID {userid}:")
-    for vehicle in items:
-        print(vehicle)  # Output each vehicle information retrieved from DynamoDB
-
     return items
-
 
 def fetch_user_by_userid(userid):
     dynamodb = boto3.resource('dynamodb')
@@ -174,7 +165,6 @@ def check_s3_bucket(bucket_name, user_arn):  # Modify the function to accept use
             # Handle other errors if needed
             raise
 
-
 def create_s3_bucket(bucket_name, user_arn):
     s3 = boto3.client('s3')
     try:
@@ -205,39 +195,33 @@ def create_s3_bucket(bucket_name, user_arn):
         else:
             print(f"Error creating bucket '{bucket_name}': {e}")
 
-
 def check_dynamodb_table_exists(table_name, user_arn):
     dynamodb = boto3.client('dynamodb')
-    try:
-        response = dynamodb.describe_table(TableName=table_name)
+    
+    existing_tables = dynamodb.list_tables()['TableNames']
+    
+    if table_name in existing_tables:
         print(f"DynamoDB table '{table_name}' exists.")
-        check_table_entries(user_table, user_arn)
-        return True
-    except dynamodb.exceptions.ResourceNotFoundException:
         if table_name == user_table:
-            try:
-                response = dynamodb.describe_table(TableName=table_name)
-                print(f"DynamoDB table '{table_name}' exists.")
-                check_table_entries(user_table, user_arn)
-                return True
-            except dynamodb.exceptions.ResourceNotFoundException:
-                    print(f"DynamoDB table '{table_name}' does not exist.")
-                    create_dynamodb_user_table(table_name, user_arn)
-                    print(f"DynamoDB table '{table_name}' created.")
-        elif table_name == vehicle_table:  # Assuming you have a variable named vehicle_table with the stored value
-            try:
-                response = dynamodb.describe_table(TableName=table_name)
-                print(f"DynamoDB table '{table_name}' exists.")
-                check_table_entries(user_table, user_arn)
-                return True
-            except dynamodb.exceptions.ResourceNotFoundException:
-                    print(f"DynamoDB table '{table_name}' does not exist.")
-                    create_dynamodb_vehicle_table(table_name, user_arn)  # Pass user_arn here
-                    print(f"DynamoDB table '{table_name}' created.")
+            check_table_entries(user_table, user_arn)
+        elif table_name == vehicle_table:
+            check_table_entries(user_table, user_arn)
+        return True
+    else:
+        if table_name == user_table:
+            print(f"DynamoDB table '{table_name}' does not exist.")
+            create_dynamodb_user_table(table_name, user_arn)
+            print(f"DynamoDB table '{table_name}' created.")
+            check_table_entries(user_table, user_arn)
+        elif table_name == vehicle_table:
+            print(f"DynamoDB table '{table_name}' does not exist.")
+            create_dynamodb_vehicle_table(table_name, user_arn)
+            print(f"DynamoDB table '{table_name}' created.")
+            check_table_entries(vehicle_table, user_arn)
         else:
             print("Table name doesn't match user_table or vehicle_table. No action taken.")
-        return False  # Adjust the indentation here to match the try block
-    
+        return False
+
 
 def create_dynamodb_user_table(table_name, user_arn):
     dynamodb = boto3.client('dynamodb')
@@ -294,22 +278,6 @@ def create_dynamodb_user_table(table_name, user_arn):
         dynamodb.get_waiter('table_exists').wait(TableName=table_name)
         print(f"DynamoDB table '{table_name}' created successfully.")
 
-        # Define the policy granting access to the app's IAM user
-        table_policy = {
-            'Version': '2012-10-17',
-            'Statement': [{
-                'Effect': 'Allow',
-                'Principal': {'AWS': user_arn},
-                'Action': ['dynamodb:Query', 'dynamodb:Scan', 'dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
-                'Resource': f'arn:aws:dynamodb:*:*:table/{table_name}'
-            }]
-        }
-
-        # Apply the policy to the table
-        table_policy_str = str(table_policy).replace("'", '"')
-        dynamodb.put_table_policy(TableName=table_name, PolicyName='AppAccessPolicy', PolicyDocument=table_policy_str)
-        print(f"Permissions granted for the app user to read and write to the table.")
-
         check_table_entries(user_table, user_arn)
 
     except dynamodb.exceptions.ResourceInUseException:
@@ -319,7 +287,6 @@ def create_dynamodb_user_table(table_name, user_arn):
 def check_table_entries(table_name, user_arn):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
-    print(f"Test193")
     try:
         response = table.scan()
         items = response.get('Items', [])
@@ -334,14 +301,11 @@ def check_table_entries(table_name, user_arn):
                 print("Table name doesn't match user_table or vehicle_table. No action taken.")
         else:
             print(f"Entries found in DynamoDB table '{table_name}':")
-            for item in items:
-                print(item)  
 
     except dynamodb.meta.client.exceptions.ResourceNotFoundException:
         print(f"DynamoDB table '{table_name}' does not exist.")
     except Exception as e:
         print(f"An error occurred while scanning DynamoDB table '{table_name}': {e}")
-
 
 def generate_hash_with_salt(input_string):
     salt = secrets.token_hex(16)  # Generate a random 128-bit salt (16 bytes)
@@ -369,70 +333,30 @@ def verify_hash(input_string, stored_hash, salt):
 
     return hashed_result == stored_hash
 
-
 def add_initial_user_entries_to_table(table_name):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
 
-    # Entry 1
-    userid1 = "12534567890"
-    password1 = "testpassword1"
-    email1 = "email1@email.com"
-    phone1 = "1234567890"
-    username1 = "testuser1"
-    firstname1 = "testfirstname1"
-    lastname1 = "testlastname1"
-    address1 = "1 test st testville testies test 12345"
+    with open('initial_users.json') as f:
+        initial_users = json.load(f)
 
-    hashed_password1, salt1 = generate_hash_with_salt(password1)  # Change to use the same hashing method
+    for user_data in initial_users:
+        hashed_password, salt = generate_hash_with_salt(user_data['password'])  # Change to use the same hashing method
+        user_item = {
+            'userid': user_data['userid'],
+            'passwordhash': hashed_password,
+            'salt': salt,
+            'email': user_data['email'],
+            'phone': user_data['phone'],
+            'username': user_data['username'],
+            'firstname': user_data['firstname'],
+            'lastname': user_data['lastname'],
+            'address': user_data['address']
+        }
 
-    item1 = {
-        'userid': userid1,
-        'passwordhash': hashed_password1,
-        'salt': salt1,
-        'email': email1,
-        'phone': phone1,
-        'username': username1,
-        'firstname': firstname1,
-        'lastname': lastname1,
-        'address': address1
-    }
-
-    # Entry 2
-    userid2 = "0123456789"
-    password2 = "testpassword0"
-    email2 = "email0@email.com"
-    phone2 = "0123456789"
-    username2 = "testuser0"
-    firstname2 = "testfirstname0"
-    lastname2 = "testlastname0"
-    address2 = "0 test st testville testies test 01234"
-
-    hashed_password2, salt2 = generate_hash_with_salt(password2)  # Change to use the same hashing method
-
-    item2 = {
-        'userid': userid2,
-        'passwordhash': hashed_password2,
-        'salt': salt2,
-        'email': email2,
-        'phone': phone2,
-        'username': username2,
-        'firstname': firstname2,
-        'lastname': lastname2,
-        'address': address2
-    }
-
-    # Put items into the DynamoDB table
-    table.put_item(Item=item1)
-    table.put_item(Item=item2)
+        table.put_item(Item=user_item)
 
     print("Initial entries added to DynamoDB table.")
-
-import boto3
-import uuid
-from datetime import datetime
-import random
-import string
 
 def create_dynamodb_vehicle_table(table_name, user_arn):
     dynamodb = boto3.client('dynamodb')
@@ -485,11 +409,6 @@ def create_dynamodb_vehicle_table(table_name, user_arn):
         dynamodb.get_waiter('table_exists').wait(TableName=table_name)
         print(f"DynamoDB table '{table_name}' created successfully.")
 
-        # Define the policy granting access to the app's IAM user
-        # Apply the policy to the table (if the put_table_policy is available in your AWS version)
-
-        print(f"Permissions granted for the app user to read and write to the table.")
-
         check_table_entries(table_name, user_arn)
 
     except dynamodb.exceptions.ResourceInUseException:
@@ -497,75 +416,43 @@ def create_dynamodb_vehicle_table(table_name, user_arn):
         check_table_entries(table_name, user_arn)
 
 
+import json
+import boto3
+from datetime import datetime
+import uuid
+import random
+import string
+
 def add_initial_vehicle_entries_to_table(table_name, userid1, userid2):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(table_name)
 
-    # Get the current year
-    current_year = datetime.now().year
+    with open('initial_vehicles.json') as f:
+        initial_vehicles = json.load(f)
 
-    # Calculate the year 25 years ago
-    year_25_years_ago = current_year - 25
-
-    # Create vehicles for user 1
-    for i in range(1, 4):
-        vehicle_year = year_25_years_ago - i  # Creating vehicles 25, 26, and 27 years old
+    for vehicle in initial_vehicles:
+        vehicle['datejoined'] = str(datetime.now())
         vh_id = str(uuid.uuid4())
-        vin = f"VIN{i}"
-        chassis_no = f"Chassis{i}"
-        make = f"Make{i}"
-        model = f"Model{i}"
-        year = str(vehicle_year)
-        variant = f"Variant{i}"
-        date_joined = str(datetime.now())
-        reg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))  # Generate a 6-character alphanumeric string for reg
+        reg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        engine_no = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        vehicle['vh-id'] = vh_id
+        vehicle['reg'] = reg
+        vehicle['engine_no'] = engine_no
 
-        item = {
-            'vh-id': vh_id,
-            'vin': vin,
-            'chassisno': chassis_no,
-            'make': make,
-            'model': model,
-            'year': year,
-            'variant': variant,
-            'userid': userid1,
-            'datejoined': date_joined,
-            'reg': reg  # Add the 'reg' attribute to the item
-        }
+        # Assign the correct userid based on the entry
+        if vehicle['userid'] == 'user1':
+            vehicle['userid'] = userid1
+        elif vehicle['userid'] == 'user2':
+            vehicle['userid'] = userid2
 
-        # Only put the item if all attributes are included
-        table.put_item(Item=item)
-
-    # Create vehicles for user 2
-    for i in range(4, 7):
-        vehicle_year = year_25_years_ago - i  # Creating vehicles 28, 29, and 30 years old
-        vh_id = str(uuid.uuid4())
-        vin = f"VIN{i}"
-        chassis_no = f"Chassis{i}"
-        make = f"Make{i}"
-        model = f"Model{i}"
-        year = str(vehicle_year)
-        variant = f"Variant{i}"
-        date_joined = str(datetime.now())
-        reg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))  # Generate a 6-character alphanumeric string for reg
-
-        item = {
-            'vh-id': vh_id,
-            'vin': vin,
-            'chassisno': chassis_no,
-            'make': make,
-            'model': model,
-            'year': year,
-            'variant': variant,
-            'userid': userid2,
-            'datejoined': date_joined,
-            'reg': reg  # Add the 'reg' attribute to the item
-        }
-
-        # Only put the item if all attributes are included
-        table.put_item(Item=item)
+        table.put_item(Item=vehicle)
 
     print("Initial vehicles added to DynamoDB table.")
+
+# Usage:
+# Provide the table name, user ids for userid1 and userid2
+# add_initial_vehicle_entries_to_table('YourTableName', 'user1_id', 'user2_id')
+
 
 
 
