@@ -4,11 +4,6 @@ from boto3.dynamodb.conditions import Attr
 import boto3
 from botocore.exceptions import ClientError
 import secrets
-import hashlib
-import uuid
-import random
-import string
-import json
 import time
 from DBops import *
 from utilities.init import *
@@ -76,5 +71,9 @@ def user_page():
 
 
 if __name__ == "__main__":
+    delete_resources()
+    print("Sleeping for 5 seconds...")
+    time.sleep(5)
+    print("Awake after 5 seconds!")
     init()
     app.run(host='0.0.0.0')

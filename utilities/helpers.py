@@ -1,4 +1,6 @@
 import hashlib
+import secrets
+
 
 def generate_hash_with_salt(input_string):
     salt = secrets.token_hex(16)  # Generate a random 128-bit salt (16 bytes)

@@ -1,13 +1,27 @@
-import datetime
+from datetime import datetime, timedelta
 import boto3
+import json
+import uuid
+import random
+import string
+from botocore.exceptions import ClientError
+from utilities.helpers import generate_hash_with_salt, verify_hash
+
 
 flask_app_user="retroideal-flask"
 member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
 user_table="retroideal-user-credentials"
 vehicle_table="retroideal-vehicle-table"
 
+def delete_resources():
+    print("Begin resource deletion!")
+    delete_s3_bucket('retroideal-member-vehicle-images')
+    delete_dynamodb_table('retroideal-user-credentials')
+    delete_dynamodb_table('retroideal-vehicle-table')
+    print("Resources deleted!")
 
 def init():
+    print("Begin initialisation!")
     user_arn = get_user_arn(flask_app_user)
     check_user_existence(flask_app_user)
     check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
@@ -306,4 +320,32 @@ def add_initial_vehicle_entries_to_table(table_name, userid1, userid2):
         table.put_item(Item=vehicle)
 
     print("Initial vehicles added to DynamoDB table.")
+
+import boto3
+from botocore.exceptions import ClientError
+
+def delete_s3_bucket(bucket_name):
+    s3 = boto3.client('s3')
+    try:
+        response = s3.delete_bucket(Bucket=bucket_name)
+        print(f"Bucket '{bucket_name}' deleted successfully.")
+    except ClientError as e:
+        print(f"Error deleting bucket '{bucket_name}': {e}")
+
+def delete_dynamodb_table(table_name):
+    dynamodb = boto3.client('dynamodb')
+    try:
+        response = dynamodb.delete_table(TableName=table_name)
+        print(f"DynamoDB table '{table_name}' deleted successfully.")
+    except ClientError as e:
+        print(f"Error deleting DynamoDB table '{table_name}': {e}")
+
+def delete_iam_user(username):
+    iam = boto3.client('iam')
+    try:
+        response = iam.delete_user(UserName=username)
+        print(f"IAM user '{username}' deleted successfully.")
+    except ClientError as e:
+        print(f"Error deleting IAM user '{username}': {e}")
+
 
