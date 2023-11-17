@@ -1,4 +1,11 @@
-from app import request, datetime, boto3, flask_app_user, member_vehicle_images_bucket_name, user_table, vehicle_table
+import datetime
+import boto3
+
+flask_app_user="retroideal-flask"
+member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
+user_table="retroideal-user-credentials"
+vehicle_table="retroideal-vehicle-table"
+
 
 def init():
     user_arn = get_user_arn(flask_app_user)

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, url_for  # Include 'redirect' and 'url_for' here
+from flask import Flask, render_template, redirect, request, url_for  
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Attr
 import boto3
@@ -13,12 +13,9 @@ import time
 from DBops import *
 from utilities.init import *
 from utilities.helpers import *
+
 app = Flask(__name__)
 
-flask_app_user="retroideal-flask"
-member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
-user_table="retroideal-user-credentials"
-vehicle_table="retroideal-vehicle-table"
 app.secret_key = "GnmcfY6KMHui9qlFcxp8lDMGywKcdukrQQIiJ0nz"
 
 @app.route("/")

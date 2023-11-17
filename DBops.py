@@ -1,4 +1,8 @@
-from application import boto3, user_table, vehicle_table, Attr
+import boto3
+from boto3.dynamodb.conditions import Attr
+
+user_table="retroideal-user-credentials"
+vehicle_table="retroideal-vehicle-table"
 
 def fetch_user_by_username(username):
     dynamodb = boto3.resource('dynamodb')
