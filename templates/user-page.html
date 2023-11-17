@@ -12,32 +12,18 @@
     </header>
     <div class="side-panel" id="sidePanel">
         <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
-        <a href="#">Option 1</a>
-        <a href="#">Option 2</a>
-        <a href="#">Option 3</a>
+        <h1>Vehicles</h1>
+        {% for vehicle in vehicles %}
+            <a href="#" onclick="loadVehicleDetails({{ loop.index }})">{{ vehicle.reg }}</a>
+        {% endfor %}
     </div>
     <div class="content">
         <h1>Welcome {{ first_name }} {{ last_name }}</h1>
         <p>You are logged in.</p>
-        <h2>Your Vehicles</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>VIN</th>
-                    <th>Make</th>
-                    <th>Model</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for vehicle in vehicles %}
-                <tr>
-                    <td>{{ vehicle.vin }}</td>
-                    <td>{{ vehicle.make }}</td>
-                    <td>{{ vehicle.model }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <h2>Selected Vehicle Details</h2>
+        <div id="vehicleDetails">
+            <!-- Details for the selected vehicle will be populated here -->
+        </div>
     </div>
     <div class="footer">
         &copy; 2023 Your Company
@@ -45,6 +31,7 @@
 
     <!-- Script to handle side panel open/close -->
     <script>
+        const vehicles = {{ vehicles | tojson | safe }};
         function openSidePanel() {
             document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
         }
@@ -52,6 +39,21 @@
         function closeSidePanel() {
             document.getElementById("sidePanel").style.width = "0";
         }
+
+        console.log('Vehicles:', vehicles); // Output the vehicles array to the console for debugging
+    
+        function loadVehicleDetails(index) {
+            const detailsContainer = document.getElementById('vehicleDetails');
+            const detailsHTML = `
+                <h2>Details for ${selectedVehicle.reg}</h2>
+                <p>VIN: ${selectedVehicle.vin}</p>
+                <p>Make: ${selectedVehicle.make}</p>
+                <p>Model: ${selectedVehicle.model}</p>
+                <!-- Add more details as needed -->
+            `;
+            detailsContainer.innerHTML = detailsHTML;
+        }
+
     </script>
 </body>
 </html>

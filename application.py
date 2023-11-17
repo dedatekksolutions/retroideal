@@ -71,9 +71,6 @@ def user_page():
 
 
 if __name__ == "__main__":
-    delete_resources()
-    print("Sleeping for 5 seconds...")
-    time.sleep(5)
-    print("Awake after 5 seconds!")
+    #delete_resources()
     init()
     app.run(host='0.0.0.0')

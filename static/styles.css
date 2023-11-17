@@ -50,3 +50,27 @@
             font-size: 36px;
             margin-left: 50px;
         }
+        /* Add a CSS style block to modify the sidebar text color */
+        .side-panel {
+            color: white; /* Change the text color to white */
+        }
+
+        /* Style the list items */
+        #vehicleList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #vehicleList li {
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        /* Add hover effect for better visibility */
+        #vehicleList li:hover {
+            background-color: lightgray;
+        }
+        /* Set text color in the content area */
+        .content {
+            color: black; /* Change the text color to black */
+        }

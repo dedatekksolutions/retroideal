@@ -15,6 +15,9 @@ vehicle_table="retroideal-vehicle-table"
 
 def delete_resources():
     print("Begin resource deletion!")
+    print("Sleeping for 5 seconds...")
+    time.sleep(5)
+    print("Awake after 5 seconds!")
     delete_s3_bucket('retroideal-member-vehicle-images')
     delete_dynamodb_table('retroideal-user-credentials')
     delete_dynamodb_table('retroideal-vehicle-table')
