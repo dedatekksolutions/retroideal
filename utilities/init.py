@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta
+import time
 import boto3
 import json
 import uuid
 import random
 import string
+import requests
 from botocore.exceptions import ClientError
 from utilities.helpers import generate_hash_with_salt, verify_hash
-
 
 flask_app_user="retroideal-flask"
 member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
@@ -27,7 +28,117 @@ def init():
     check_dynamodb_table_exists(vehicle_image_table, user_arn)
     check_folder_exists(member_vehicle_images_bucket_name, pending_images_folder)
     check_folder_exists(member_vehicle_images_bucket_name, approved_images_folder)
+    check_images_in_folder(member_vehicle_images_bucket_name, approved_images_folder)
     print("Application initialized!")
+
+def iterate_vehicle_and_image_urls(bucket_name, folder_name):
+    try:
+        with open('initial_vehicles.json', 'r') as vehicle_file, open('initial_images.json', 'r') as image_file:
+            vehicle_data = json.load(vehicle_file)
+            image_data = json.load(image_file)
+            vehicles = vehicle_data if isinstance(vehicle_data, list) else []
+            images = image_data.get('images', []) if isinstance(image_data, dict) else []
+
+            if len(vehicles) != len(images):
+                print("Unequal number of vehicles and images. Cannot proceed.")
+                return
+
+            for index, vehicle in enumerate(vehicles):
+                if index < len(images):  # Ensure the index is within the range of images
+                    vehicle_id = vehicle.get('vh_id')  # Assuming 'vh_id' key exists in vehicle JSON
+                    image_url = images[index].get('url')  # Extracting 'url' from the image entry
+                    user_id = vehicle.get('userid')
+                    approval = "approved"
+                    purpose = str(datetime.now())
+                    image_id = str(uuid.uuid4())
+                    upload_image_to_s3_from_url(bucket_name, folder_name, image_id, image_url)
+                    path, image_url = get_image_url_and_path(bucket_name, folder_name, image_id)
+                    add_entry_to_vehicle_image_table(vehicle_image_table, image_id, user_id, vehicle_id, image_url, approval, purpose, image_id, path)
+    except FileNotFoundError:
+        print("File 'initial_vehicles.json' or 'initial_images.json' not found.")
+        pass
+    except json.JSONDecodeError:
+        print("Error decoding JSON data from 'initial_vehicles.json' or 'initial_images.json'.")
+        pass
+    except Exception as e:
+        print("An error occurred:", e)
+        pass
+
+def check_images_in_folder(bucket_name, folder_name):
+    s3 = boto3.client('s3')
+    try:
+        # Get a list of objects in the specified folder
+        objects = s3.list_objects_v2(Bucket=bucket_name, Prefix=folder_name)
+
+        # Check if there are at least six images in the folder
+        if 'Contents' in objects and len(objects['Contents']) >= 6:
+            print(f"At least six images found in the '{folder_name}' folder.")
+        else:
+            print(f"Less than six images found in the '{folder_name}' folder.")
+            iterate_vehicle_and_image_urls(member_vehicle_images_bucket_name, approved_images_folder)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def get_image_url_and_path(bucket_name, folder_name, image_id):
+    s3 = boto3.client('s3')
+    file_name = f"{image_id}.jpg"  # Make sure this matches the filename format used while uploading
+    s3_key = f"{folder_name}/{file_name}"
+    image_url = f"https://{bucket_name}.s3.amazonaws.com/{s3_key}"
+
+    return file_name, image_url
+
+def add_entry_to_vehicle_image_table(table_name, image_id, user_id, vehicle_id, image_url, status, purpose, filename, path):
+    dynamodb = boto3.client('dynamodb')
+
+    # Define item attributes
+    item = {
+        'image-id': {'S': image_id},
+        'user-id': {'S': user_id},
+        'vehicle-id': {'S': vehicle_id},
+        'image-url': {'S': image_url},
+        'status': {'S': status},
+        'purpose': {'S': purpose},
+        'filename': {'S': filename},
+        'path': {'S': path}
+    }
+
+    try:
+        response = dynamodb.put_item(
+            TableName=table_name,
+            Item=item
+        )
+        print(f"Entry added to '{table_name}' with image ID: {image_id}")
+        return response  # Optional: Return the response from the DynamoDB service
+    except Exception as e:
+        print("Error adding entry:", e)
+        return None  # Return None in case of failure
+
+
+def upload_image_to_s3_from_url(bucket_name, folder_name, image_id, image_url):
+    s3 = boto3.client('s3')
+    
+    try:
+        # Get the image data from the URL
+        response = requests.get(image_url)
+        if response.status_code == 200:
+            image_data = response.content
+
+            # Use image_id as the filename
+            file_name = f"{image_id}.jpg"  # You can adjust the file extension as needed
+
+            # Construct the S3 key using folder name and file name
+            s3_key = f"{folder_name}/{file_name}"
+
+            # Upload the image data to S3
+            s3.put_object(Bucket=bucket_name, Key=s3_key, Body=image_data)
+
+            print(f"Image from URL '{image_url}' uploaded to '{folder_name}' in bucket '{bucket_name}' as '{file_name}'.")
+        else:
+            print(f"Failed to fetch image from URL '{image_url}'. Status code: {response.status_code}")
+    except ClientError as e:
+        print("An error occurred:", e)
+    except Exception as e:
+        print("An error occurred:", e)
 
 def create_vehicle_images_table(table_name, user_arn):
     dynamodb = boto3.resource('dynamodb')
@@ -99,13 +210,23 @@ def check_folder_exists(bucket_name, folder_name):
 
 def delete_resources():
     print("Begin resource deletion!")
-    print("Sleeping for 5 seconds...")
-    time.sleep(5)
-    print("Awake after 5 seconds!")
-    delete_s3_bucket('retroideal-member-vehicle-images')
-    delete_dynamodb_table('retroideal-user-credentials')
-    delete_dynamodb_table('retroideal-vehicle-table')
+    empty_s3_bucket(member_vehicle_images_bucket_name)
+    delete_s3_bucket(member_vehicle_images_bucket_name)
+    delete_dynamodb_table(user_table)
+    delete_dynamodb_table(vehicle_table)
+    delete_dynamodb_table(image_data)
     print("Resources deleted!")
+
+
+def empty_s3_bucket(bucket_name):
+    s3 = boto3.resource('s3')
+    bucket = s3.Bucket(bucket_name)
+
+    for obj in bucket.objects.all():
+        obj.delete()
+
+    print(f"Bucket '{bucket_name}' emptied successfully.")
+
 
 #get user arn for creating resources
 def get_user_arn(username):
@@ -155,15 +276,15 @@ def create_s3_bucket(bucket_name, user_arn):
         s3.create_bucket(Bucket=bucket_name)
         print(f"Bucket '{bucket_name}' created successfully.")
         
-        # Define the bucket policy granting full access to the owner (replace with your app/user ID)
+        # Define the bucket policy granting full access to the app user
         bucket_policy = {
             'Version': '2012-10-17',
             'Statement': [{
-                'Sid': 'GiveAppReadWriteAccess',
+                'Sid': 'GiveFlaskAppUserFullAccess',
                 'Effect': 'Allow',
                 'Principal': {'AWS': user_arn},  # Use the IAM user's ARN
-                'Action': ['s3:GetObject', 's3:PutObject'],
-                'Resource': f'arn:aws:s3:::{bucket_name}/*'
+                'Action': ['s3:GetObject', 's3:PutObject', 's3:ListBucket'],
+                'Resource': [f'arn:aws:s3:::{bucket_name}', f'arn:aws:s3:::{bucket_name}/*']
             }]
         }
         
@@ -171,13 +292,14 @@ def create_s3_bucket(bucket_name, user_arn):
         bucket_policy_str = str(bucket_policy).replace("'", '"')
         s3.put_bucket_policy(Bucket=bucket_name, Policy=bucket_policy_str)
         
-        print(f"Permissions granted for the app to read and write to the bucket.")
+        print(f"Permissions granted for the app user to read and write to the bucket.")
     except ClientError as e:
         error_code = e.response.get('Error', {}).get('Code')
         if error_code == 'BucketAlreadyOwnedByYou':
             print(f"The bucket '{bucket_name}' already exists and is owned by you.")
         else:
             print(f"Error creating bucket '{bucket_name}': {e}")
+
 
 def check_dynamodb_table_exists(table_name, user_arn):
     dynamodb = boto3.client('dynamodb')

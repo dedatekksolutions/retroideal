@@ -27,3 +27,4 @@ def verify_hash(input_string, stored_hash, salt):
     hashed_result = hash_object.hexdigest()
 
     return hashed_result == stored_hash
+
