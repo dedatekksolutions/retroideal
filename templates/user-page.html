@@ -11,8 +11,9 @@
         <span style="font-size:30px;cursor:pointer" onclick="openSidePanel()">&#9776;</span>
         <div class="banner-section">
             <span class="retro-font">Retro Ideal</span>
+            <p class="cursive-font">{{ first_name }}</p>
         </div>
-        <p class="cursive-font">{{ first_name }} {{ last_name }}</p>
+        <button onclick="logout()" class="logout-btn">Logout</button>
     </header>
     <div class="side-panel" id="sidePanel">
         <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
