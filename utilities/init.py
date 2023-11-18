@@ -12,6 +12,90 @@ flask_app_user="retroideal-flask"
 member_vehicle_images_bucket_name = "retroideal-member-vehicle-images"
 user_table="retroideal-user-credentials"
 vehicle_table="retroideal-vehicle-table"
+vehicle_image_table="retroideal-vehicle-image-table"
+pending_images_folder="pending-vehicle-images"
+approved_images_folder="approved-vehicle-images"
+
+
+def init():
+    print("Begin initialisation!")
+    user_arn = get_user_arn(flask_app_user)
+    check_user_existence(flask_app_user)
+    check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
+    check_dynamodb_table_exists(user_table, user_arn)
+    check_dynamodb_table_exists(vehicle_table, user_arn)
+    check_dynamodb_table_exists(vehicle_image_table, user_arn)
+    check_folder_exists(member_vehicle_images_bucket_name, pending_images_folder)
+    check_folder_exists(member_vehicle_images_bucket_name, approved_images_folder)
+    print("Application initialized!")
+
+def create_vehicle_images_table(table_name, user_arn):
+    dynamodb = boto3.resource('dynamodb')
+    
+    # Define table attributes
+    table_attributes = [
+        {'AttributeName': 'image-id', 'AttributeType': 'S'},
+        {'AttributeName': 'user-id', 'AttributeType': 'S'},
+        {'AttributeName': 'vehicle-id', 'AttributeType': 'S'},
+        {'AttributeName': 'image-url', 'AttributeType': 'S'},
+        {'AttributeName': 'status', 'AttributeType': 'S'},
+        {'AttributeName': 'purpose', 'AttributeType': 'S'},
+        {'AttributeName': 'filename', 'AttributeType': 'S'},  # New attribute for filename
+        {'AttributeName': 'path', 'AttributeType': 'S'}         # New attribute for path
+    ]
+
+    # Define primary key
+    key_schema = [
+        {'AttributeName': 'image-id', 'KeyType': 'HASH'},  # Partition key
+    ]
+
+    # Create table parameters
+    provisioned_throughput = {
+        'ReadCapacityUnits': 5,
+        'WriteCapacityUnits': 5
+    }
+
+    # Create table
+    table = dynamodb.create_table(
+        TableName=table_name,
+        KeySchema=key_schema,
+        AttributeDefinitions=table_attributes[:1],  # Use only the primary key in AttributeDefinitions
+        ProvisionedThroughput=provisioned_throughput
+    )
+
+    # Wait until table is created
+    table.meta.client.get_waiter('table_exists').wait(TableName=table_name)
+
+    print(f"Table '{table_name}' created successfully.")
+
+
+def create_folder(bucket_name, folder_name):
+    s3 = boto3.client('s3')
+
+    try:
+        # Put an empty object (file) to create a folder in S3
+        s3.put_object(Bucket=bucket_name, Key=(folder_name + '/'))
+        print(f"Folder '{folder_name}' created in bucket '{bucket_name}'.")
+    except Exception as e:
+        print("An error occurred:", e)
+        raise
+
+def check_folder_exists(bucket_name, folder_name):
+    s3 = boto3.client('s3')
+
+    try:
+        # Use head_object to check if the folder exists
+        response = s3.head_object(Bucket=bucket_name, Key=(folder_name + '/'))
+        print(f"The folder '{folder_name}' exists in the bucket '{bucket_name}'.")
+    except s3.exceptions.ClientError as e:
+        # If head_object throws an error, the folder doesn't exist
+        if e.response['Error']['Code'] == '404':
+            print(f"The folder '{folder_name}' does not exist in the bucket '{bucket_name}'.")
+            create_folder(bucket_name, folder_name)
+        else:
+            # Handle other potential errors
+            print("An error occurred:", e)
+            raise
 
 def delete_resources():
     print("Begin resource deletion!")
@@ -22,15 +106,6 @@ def delete_resources():
     delete_dynamodb_table('retroideal-user-credentials')
     delete_dynamodb_table('retroideal-vehicle-table')
     print("Resources deleted!")
-
-def init():
-    print("Begin initialisation!")
-    user_arn = get_user_arn(flask_app_user)
-    check_user_existence(flask_app_user)
-    check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
-    check_dynamodb_table_exists(user_table, user_arn)
-    check_dynamodb_table_exists(vehicle_table, user_arn)
-    print("Application initialized!")
 
 #get user arn for creating resources
 def get_user_arn(username):
@@ -127,6 +202,11 @@ def check_dynamodb_table_exists(table_name, user_arn):
             create_dynamodb_vehicle_table(table_name, user_arn)
             print(f"DynamoDB table '{table_name}' created.")
             check_table_entries(vehicle_table, user_arn)
+        elif table_name == vehicle_image_table:
+            print(f"DynamoDB table '{table_name}' does not exist.")
+            create_vehicle_images_table(table_name, user_arn)
+            print(f"DynamoDB table '{table_name}' created.")
+            check_table_entries(vehicle_table, user_arn)
         else:
             print("Table name doesn't match user_table or vehicle_table. No action taken.")
         return False
@@ -206,6 +286,8 @@ def check_table_entries(table_name, user_arn):
                 add_initial_user_entries_to_table(table_name)
             elif table_name == vehicle_table:  # Assuming you have a variable named vehicle_table with the stored value
                 add_initial_vehicle_entries_to_table(vehicle_table, "0123456789", "1234567890")
+            elif table_name == vehicle_image_table:  # Assuming you have a variable named vehicle_table with the stored value
+                add_initial_vehicle_image_entries_to_table(vehicle_table, "0123456789", "1234567890")
             else:
                 print("Table name doesn't match user_table or vehicle_table. No action taken.")
         else:
@@ -323,9 +405,6 @@ def add_initial_vehicle_entries_to_table(table_name, userid1, userid2):
         table.put_item(Item=vehicle)
 
     print("Initial vehicles added to DynamoDB table.")
-
-import boto3
-from botocore.exceptions import ClientError
 
 def delete_s3_bucket(bucket_name):
     s3 = boto3.client('s3')
