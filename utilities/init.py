@@ -28,7 +28,7 @@ def init():
     check_dynamodb_table_exists(vehicle_image_table, user_arn)
     check_folder_exists(member_vehicle_images_bucket_name, pending_images_folder)
     check_folder_exists(member_vehicle_images_bucket_name, approved_images_folder)
-    check_images_in_folder(member_vehicle_images_bucket_name, approved_images_folder)
+    create_folders_and_upload_images(member_vehicle_images_bucket_name, approved_images_folder)
     print("Application initialized!")
 
 def iterate_vehicle_and_image_urls(bucket_name, folder_name):
@@ -64,20 +64,75 @@ def iterate_vehicle_and_image_urls(bucket_name, folder_name):
         print("An error occurred:", e)
         pass
 
-def check_images_in_folder(bucket_name, folder_name):
-    s3 = boto3.client('s3')
+def create_folders_and_upload_images(bucket_name, approved_images_folder):
     try:
-        # Get a list of objects in the specified folder
-        objects = s3.list_objects_v2(Bucket=bucket_name, Prefix=folder_name)
+        with open('initial_users.json', 'r') as users_file, open('initial_images.json', 'r') as images_file, open('initial_vehicles.json', 'r') as vehicles_file:
+            users_data = json.load(users_file)
+            images_data = json.load(images_file)
+            vehicles_data = json.load(vehicles_file)
 
-        # Check if there are at least six images in the folder
-        if 'Contents' in objects and len(objects['Contents']) >= 6:
-            print(f"At least six images found in the '{folder_name}' folder.")
-        else:
-            print(f"Less than six images found in the '{folder_name}' folder.")
-            iterate_vehicle_and_image_urls(member_vehicle_images_bucket_name, approved_images_folder)
+            users = users_data if isinstance(users_data, list) else []
+            images = images_data.get('images', []) if isinstance(images_data, dict) else []
+            vehicles = vehicles_data if isinstance(vehicles_data, list) else []
+
+            if not users or not images or not vehicles:
+                print("No users, images, or vehicles found. Cannot proceed.")
+                return
+
+            for user in users:
+                user_id = user.get('userid')
+                utc_timestamp_ten_months_ago = datetime.utcnow() - timedelta(days=10 * 30)
+
+                user_folder_title = f"{utc_timestamp_ten_months_ago.strftime('%Y-%m-%d')}-{user_id}"
+                user_folder_key = f"{approved_images_folder.rstrip('/')}/{user_folder_title}"
+
+                s3 = boto3.client('s3')
+                try:
+                    # Use head_object to check if the user's folder exists
+                    s3.head_object(Bucket=bucket_name, Key=f"{user_folder_key}")
+                    print(f"The folder '{user_folder_title}' exists in the bucket '{bucket_name}'.")
+                except s3.exceptions.ClientError as e:
+                    # If head_object throws an error, the folder doesn't exist
+                    if e.response['Error']['Code'] == '404':
+                        print(f"The folder '{user_folder_title}' does not exist. Creating...")
+
+                        # Create the user's folder
+                        s3.put_object(Bucket=bucket_name, Key=f"{user_folder_key}/")
+
+                        # Fetch vehicles associated with the user from the vehicle table
+                        user_vehicles = [vehicle for vehicle in vehicles if vehicle.get('userid') == user_id]
+                        for vehicle in user_vehicles:
+                            vehicle_id = vehicle.get('vh_id')
+                            vehicle_folder_key = f"{approved_images_folder.rstrip('/')}/{user_folder_title}/{vehicle_id}"
+
+                            try:
+                                # Create folder for the vehicle under the user's folder
+                                s3.put_object(Bucket=bucket_name, Key=f"{vehicle_folder_key}/")
+
+                                # Upload two images for each vehicle from initial_images.json
+                                for _ in range(2):
+                                    random_image = random.choice(images)
+                                    image_url = random_image.get('url')
+                                    image_id = str(uuid.uuid4())
+
+                                    upload_image_to_s3_from_url(bucket_name, vehicle_folder_key, image_id, image_url)
+                                    path, image_url = get_image_url_and_path(bucket_name, vehicle_folder_key, image_id)
+                                    add_entry_to_vehicle_image_table(vehicle_image_table, image_id, user_id, vehicle_id, image_url, "approved", str(datetime.now()), image_id, path)
+
+                                print(f"Uploaded two images for vehicle '{vehicle_id}' in folder '{vehicle_folder_key}'.")
+
+                            except Exception as e:
+                                print(f"An error occurred for vehicle '{vehicle_id}': {e}")
+
+                except Exception as e:
+                    print(f"An error occurred for user '{user_id}': {e}")
+
+    except FileNotFoundError:
+        print("File 'initial_users.json' or 'initial_images.json' or 'initial_vehicles.json' not found.")
+    except json.JSONDecodeError:
+        print("Error decoding JSON data from 'initial_users.json' or 'initial_images.json' or 'initial_vehicles.json'.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print("An error occurred:", e)
 
 def get_image_url_and_path(bucket_name, folder_name, image_id):
     s3 = boto3.client('s3')
