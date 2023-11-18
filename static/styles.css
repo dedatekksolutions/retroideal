@@ -1,10 +1,32 @@
-/* Example styles for demonstration purposes */
+
         /* Navbar styles */
         .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background-color: #333;
             color: white;
-            padding: 10px;
+            padding: 10px 20px;
         }
+
+        /* Retro Ideal font styling */
+        .retro-font {
+            font-family: 'Your Retro Font', cursive; /* Add your desired retro font family */
+            font-size: 24px; /* Adjust font size */
+        }
+
+        /* Welcome section styling */
+        .banner-section {
+            text-align: center;
+        }
+
+        /* Cursive font for welcome message */
+        .cursive-font {
+            font-family: 'Your Cursive Font', cursive; /* Add your desired cursive font family */
+            font-size: 18px; /* Adjust font size */
+            margin-bottom: 5px; /* Adjust margin as needed */
+        }
+
         /* Footer styles */
         .footer {
             background-color: #333;
