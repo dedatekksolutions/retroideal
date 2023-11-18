@@ -96,3 +96,20 @@
         .content {
             color: black; /* Change the text color to black */
         }
+
+        /* Add this to your existing styles.css or include it within a style tag in the HTML file */
+
+        /* Style for the image gallery container */
+        #imageGallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+            align-items: center;
+        }
+
+        /* Style for individual gallery images */
+        .gallery-image {
+            max-width: 100%;
+            height: auto;
+            margin: 10px; /* Adjust margin as needed */
+        }

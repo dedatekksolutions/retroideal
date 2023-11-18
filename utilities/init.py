@@ -288,6 +288,7 @@ def create_s3_bucket(bucket_name, user_arn):
             }]
         }
         
+        
         # Convert the policy to a JSON string and apply it to the bucket
         bucket_policy_str = str(bucket_policy).replace("'", '"')
         s3.put_bucket_policy(Bucket=bucket_name, Policy=bucket_policy_str)
