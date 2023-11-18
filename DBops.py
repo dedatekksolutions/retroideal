@@ -26,6 +26,14 @@ def fetch_vehicles_by_userid(userid):
 
     response = table.scan(FilterExpression=Attr('userid').eq(userid))
     items = response.get('Items', [])
+    print(items)
+    return items
+
+def fetch_vehicle_image_data_by_userid(userid):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(vehicle_image_table)
+    response = table.scan(FilterExpression=Attr('user-id').eq(userid))
+    items = response.get('Items', [])
     return items
 
 def fetch_user_by_userid(userid):

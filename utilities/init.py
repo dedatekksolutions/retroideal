@@ -214,7 +214,7 @@ def delete_resources():
     delete_s3_bucket(member_vehicle_images_bucket_name)
     delete_dynamodb_table(user_table)
     delete_dynamodb_table(vehicle_table)
-    delete_dynamodb_table(image_data)
+    delete_dynamodb_table(vehicle_image_table)
     print("Resources deleted!")
 
 
@@ -408,8 +408,6 @@ def check_table_entries(table_name, user_arn):
                 add_initial_user_entries_to_table(table_name)
             elif table_name == vehicle_table:  # Assuming you have a variable named vehicle_table with the stored value
                 add_initial_vehicle_entries_to_table(vehicle_table, "0123456789", "1234567890")
-            elif table_name == vehicle_image_table:  # Assuming you have a variable named vehicle_table with the stored value
-                add_initial_vehicle_image_entries_to_table(vehicle_table, "0123456789", "1234567890")
             else:
                 print("Table name doesn't match user_table or vehicle_table. No action taken.")
         else:
@@ -511,19 +509,12 @@ def add_initial_vehicle_entries_to_table(table_name, userid1, userid2):
 
     for vehicle in initial_vehicles:
         vehicle['datejoined'] = str(datetime.now())
-        vh_id = str(uuid.uuid4())
         reg = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         engine_no = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        vh_id = vehicle.get('vh_id')
         vehicle['vh-id'] = vh_id
         vehicle['reg'] = reg
         vehicle['engine_no'] = engine_no
-
-        # Assign the correct userid based on the entry
-        if vehicle['userid'] == 'user1':
-            vehicle['userid'] = userid1
-        elif vehicle['userid'] == 'user2':
-            vehicle['userid'] = userid2
-
         table.put_item(Item=vehicle)
 
     print("Initial vehicles added to DynamoDB table.")

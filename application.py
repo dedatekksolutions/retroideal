@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, url_for  
+from flask import Flask, render_template, redirect, request, url_for, session  
 from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Attr
 import boto3
@@ -8,6 +8,7 @@ import time
 from DBops import *
 from utilities.init import *
 from utilities.helpers import *
+
 
 app = Flask(__name__)
 
@@ -21,8 +22,6 @@ def index():
 def display_users():
     users = fetch_users()
     return render_template('login.html', users=users)
-
-from flask import session  # Include the session module from Flask
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -63,11 +62,16 @@ def user_page():
             # Fetch vehicles for the current user
             user_vehicles = fetch_vehicles_by_userid(userid)
 
-            return render_template("user-page.html", first_name=first_name, last_name=last_name, vehicles=user_vehicles)
+            # Fetch vehicle images for the current user
+            user_vehicle_images = fetch_vehicle_image_data_by_userid(userid)
+
+            return render_template("user-page.html", first_name=first_name, last_name=last_name, vehicles=user_vehicles, vehicle_images=user_vehicle_images)
+
         else:
             return "User not found"
     else:
         return redirect(url_for("display_users"))
+
 
 
 if __name__ == "__main__":
