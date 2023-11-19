@@ -83,21 +83,50 @@
     }
     
     function addVehicle(index) {
-    // Function to handle the button click event
-    const contentArea = document.getElementById('contentArea');
+    // Get the vehicle object based on the index
+    const selectedVehicle = vehicles[index - 1]; // Adjust the index if needed
     
-    // Change content to New Upload
-    contentArea.innerHTML = `
-        <h2>New Upload</h2>
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_image') }}">
-            <input type="file" id="fileInput" name="fileInput">
-            <button type="submit">Upload</button>
-        </form>
-        <div id="uploadGallery" class="image-gallery">
-            <!-- Gallery view for uploaded files goes here -->
-        </div>
-    `;
+    // Call a function to load details for the selected vehicle
+    loadVehicleDetailsByReg(selectedVehicle.reg);
 }
+
+function loadVehicleDetailsByReg(reg) {
+    // Find the vehicle details based on the registration number (reg)
+    const selectedVehicle = vehicles.find(vehicle => vehicle.reg === reg);
+
+    // Proceed to load details if the vehicle with the matching registration is found
+    if (selectedVehicle) {
+        const detailsContainer = document.getElementById('vehicleDetails');
+        const galleryContainer = document.getElementById('imageGallery');
+
+        const detailsHTML = `
+            <h2>Details for ${selectedVehicle.reg}</h2>
+            <p>VIN: ${selectedVehicle.vin}</p>
+            <p>Make: ${selectedVehicle.make}</p>
+            <p>Model: ${selectedVehicle.model}</p>
+            <!-- Add more details as needed -->
+        `;
+        detailsContainer.innerHTML = detailsHTML;
+
+        // Filter vehicle images for the selected vehicle
+        const selectedVehicleImages = vehicle_images.filter(image => image['vehicle-id'] === selectedVehicle.vh_id);
+
+        let galleryHTML = '<h2>Image Gallery</h2><div class="gallery">';
+
+        selectedVehicleImages.forEach(image => {
+            galleryHTML += `
+                <img src="${image['image-url']}" alt="${image['filename']}" class="gallery-image">
+                <!-- You can add more image details if needed -->
+            `;
+        });
+        galleryHTML += '</div>';
+        galleryContainer.innerHTML = galleryHTML;
+    } else {
+        // Handle case where no vehicle with matching registration is found
+        console.log('Vehicle not found');
+    }
+}
+
 
 function uploadFile() {
     // Function to handle file upload
