@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn instance to serve retroideal
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/retroideal
+Environment="PATH=/home/ubuntu/retroideal/flask-env/bin"
+ExecStart=/home/ubuntu/retroideal/flask-env/bin/gunicorn --workers 3 --bind unix:retroideal.sock -m 007 wsgi:app
+
+[Install]
+WantedBy=multi-user.target

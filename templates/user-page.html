@@ -19,10 +19,14 @@
         <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
         <h1>Vehicles</h1>
         {% for vehicle in vehicles %}
-            <a href="#" onclick="loadVehicleDetails({{ loop.index }})">{{ vehicle.reg }}</a>
+            <div class="vehicle-item">
+                <a href="#" onclick="loadVehicleDetails({{ loop.index }})">{{ vehicle.reg }}</a>
+                <button class="add-button" onclick="addVehicle({{ loop.index }})">+</button>
+            </div>
         {% endfor %}
-    </div>
-    <div class="content">
+    </div>    
+    <div class="content" id="contentArea">
+        <!-- Existing content -->
         <h2>Selected Vehicle Details</h2>
         <div id="vehicleDetails">
             <!-- Details for the selected vehicle will be populated here -->
@@ -77,8 +81,51 @@
         galleryHTML += '</div>';
         galleryContainer.innerHTML = galleryHTML;
     }
-    console.log('Vehicles:', vehicles);
-    console.log('Vehicle images:', vehicle_images);
+    
+    function addVehicle(index) {
+    // Function to handle the button click event
+    const contentArea = document.getElementById('contentArea');
+    
+    // Change content to New Upload
+    contentArea.innerHTML = `
+        <h2>New Upload</h2>
+        <div class="file-upload-panel">
+            <!-- File upload panel content goes here -->
+            <input type="file" id="fileInput">
+            <button onclick="uploadFile()">Upload</button>
+        </div>
+        <div id="uploadGallery" class="image-gallery">
+            <!-- Gallery view for uploaded files goes here -->
+        </div>
+    `;
+}
+
+function uploadFile() {
+    // Function to handle file upload
+    const fileInput = document.getElementById('fileInput');
+    const uploadGallery = document.getElementById('uploadGallery');
+
+    // Perform file upload actions, e.g., display uploaded images
+    // For demonstration purposes, let's assume there's an array of uploaded images
+    const uploadedImages = [
+        'image1.jpg',
+        'image2.jpg',
+        'image3.jpg'
+        // ... add more images as needed
+    ];
+
+    // Display uploaded images in the gallery
+    let galleryHTML = '<h3>Uploaded Images</h3><div class="gallery">';
+
+    uploadedImages.forEach(image => {
+        galleryHTML += `
+            <img src="${image}" alt="Uploaded Image" class="gallery-image">
+        `;
+    });
+    galleryHTML += '</div>';
+    uploadGallery.innerHTML = galleryHTML;
+}
+
 
 
     </script>

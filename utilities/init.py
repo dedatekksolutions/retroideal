@@ -20,8 +20,8 @@ approved_images_folder="approved-vehicle-images"
 
 def init():
     print("Begin initialisation!")
-    user_arn = get_user_arn(flask_app_user)
     check_user_existence(flask_app_user)
+    user_arn = get_user_arn(flask_app_user)
     check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
     check_dynamodb_table_exists(user_table, user_arn)
     check_dynamodb_table_exists(vehicle_table, user_arn)
@@ -79,23 +79,33 @@ def create_folders_and_upload_images(bucket_name, approved_images_folder):
                 print("No users, images, or vehicles found. Cannot proceed.")
                 return
 
+            s3 = boto3.client('s3')
+            images_found = False
             for user in users:
                 user_id = user.get('userid')
                 utc_timestamp_ten_months_ago = datetime.utcnow() - timedelta(days=10 * 30)
-
                 user_folder_title = f"{utc_timestamp_ten_months_ago.strftime('%Y-%m-%d')}-{user_id}"
                 user_folder_key = f"{approved_images_folder.rstrip('/')}/{user_folder_title}"
 
-                s3 = boto3.client('s3')
                 try:
-                    # Use head_object to check if the user's folder exists
-                    s3.head_object(Bucket=bucket_name, Key=f"{user_folder_key}")
-                    print(f"The folder '{user_folder_title}' exists in the bucket '{bucket_name}'.")
-                except s3.exceptions.ClientError as e:
-                    # If head_object throws an error, the folder doesn't exist
-                    if e.response['Error']['Code'] == '404':
-                        print(f"The folder '{user_folder_title}' does not exist. Creating...")
+                    # Check if there are any images in the user's folder or its subfolders
+                    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=user_folder_key)
+                    if 'Contents' in response and len(response['Contents']) > 0:
+                        images_found = True
+                        break
 
+                except s3.exceptions.ClientError as e:
+                    print(f"An error occurred for user '{user_id}': {e}")
+
+            if not images_found:
+                # If no images are found, proceed with creating folders and uploading images
+                for user in users:
+                    user_id = user.get('userid')
+                    utc_timestamp_ten_months_ago = datetime.utcnow() - timedelta(days=10 * 30)
+                    user_folder_title = f"{utc_timestamp_ten_months_ago.strftime('%Y-%m-%d')}-{user_id}"
+                    user_folder_key = f"{approved_images_folder.rstrip('/')}/{user_folder_title}"
+
+                    try:
                         # Create the user's folder
                         s3.put_object(Bucket=bucket_name, Key=f"{user_folder_key}/")
 
@@ -103,7 +113,7 @@ def create_folders_and_upload_images(bucket_name, approved_images_folder):
                         user_vehicles = [vehicle for vehicle in vehicles if vehicle.get('userid') == user_id]
                         for vehicle in user_vehicles:
                             vehicle_id = vehicle.get('vh_id')
-                            vehicle_folder_key = f"{approved_images_folder.rstrip('/')}/{user_folder_title}/{vehicle_id}"
+                            vehicle_folder_key = f"{user_folder_key}/{vehicle_id}"
 
                             try:
                                 # Create folder for the vehicle under the user's folder
@@ -124,8 +134,11 @@ def create_folders_and_upload_images(bucket_name, approved_images_folder):
                             except Exception as e:
                                 print(f"An error occurred for vehicle '{vehicle_id}': {e}")
 
-                except Exception as e:
-                    print(f"An error occurred for user '{user_id}': {e}")
+                    except Exception as e:
+                        print(f"An error occurred for user '{user_id}': {e}")
+
+            else:
+                print("Images found in the specified folders. Skipping upload.")
 
     except FileNotFoundError:
         print("File 'initial_users.json' or 'initial_images.json' or 'initial_vehicles.json' not found.")
@@ -133,6 +146,7 @@ def create_folders_and_upload_images(bucket_name, approved_images_folder):
         print("Error decoding JSON data from 'initial_users.json' or 'initial_images.json' or 'initial_vehicles.json'.")
     except Exception as e:
         print("An error occurred:", e)
+
 
 def get_image_url_and_path(bucket_name, folder_name, image_id):
     s3 = boto3.client('s3')
@@ -331,24 +345,6 @@ def create_s3_bucket(bucket_name, user_arn):
         s3.create_bucket(Bucket=bucket_name)
         print(f"Bucket '{bucket_name}' created successfully.")
         
-        # Define the bucket policy granting full access to the app user
-        bucket_policy = {
-            'Version': '2012-10-17',
-            'Statement': [{
-                'Sid': 'GiveFlaskAppUserFullAccess',
-                'Effect': 'Allow',
-                'Principal': {'AWS': user_arn},  # Use the IAM user's ARN
-                'Action': ['s3:GetObject', 's3:PutObject', 's3:ListBucket'],
-                'Resource': [f'arn:aws:s3:::{bucket_name}', f'arn:aws:s3:::{bucket_name}/*']
-            }]
-        }
-        
-        
-        # Convert the policy to a JSON string and apply it to the bucket
-        bucket_policy_str = str(bucket_policy).replace("'", '"')
-        s3.put_bucket_policy(Bucket=bucket_name, Policy=bucket_policy_str)
-        
-        print(f"Permissions granted for the app user to read and write to the bucket.")
     except ClientError as e:
         error_code = e.response.get('Error', {}).get('Code')
         if error_code == 'BucketAlreadyOwnedByYou':
@@ -590,13 +586,5 @@ def delete_dynamodb_table(table_name):
         print(f"DynamoDB table '{table_name}' deleted successfully.")
     except ClientError as e:
         print(f"Error deleting DynamoDB table '{table_name}': {e}")
-
-def delete_iam_user(username):
-    iam = boto3.client('iam')
-    try:
-        response = iam.delete_user(UserName=username)
-        print(f"IAM user '{username}' deleted successfully.")
-    except ClientError as e:
-        print(f"Error deleting IAM user '{username}': {e}")
 
 

@@ -1,5 +1,20 @@
 
         /* Navbar styles */
+        .vehicle-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .add-button {
+            background-color: #818181; /* Change the background color to a visible one */
+            border: none;
+            color: white; /* Change the text color to white */
+            font-size: 14px; /* Adjust the font size if needed */
+            padding: 5px 10px; /* Add padding for better visibility */
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
         .navbar {
             display: flex;
             justify-content: space-between;
