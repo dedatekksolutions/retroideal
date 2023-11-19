@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Upload</title>
+    <!-- Include any necessary CSS or scripts -->
+</head>
+<body>
+    <h2>New Upload</h2>
+    <div id="vehicleDetails">
+        <p>Registration: {{ vehicle_reg }}</p>
+        <!-- Display other relevant vehicle details here -->
+    </div>
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_image') }}">
+        <input type="file" id="fileInput" name="fileInput">
+        <!-- Pass vehicle registration for reference -->
+        <input type="hidden" name="vehicle_reg" value="{{ vehicle_reg }}">
+        <button type="submit">Upload</button>
+    </form>
+    <div id="uploadGallery" class="image-gallery">
+        <!-- Gallery view for uploaded files goes here -->
+    </div>
+</body>
+</html>

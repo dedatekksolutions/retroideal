@@ -65,3 +65,16 @@ def upload_image_to_s3(bucket_name, folder_name, file_name, image_data):
     except Exception as e:
         print("An error occurred:", e)
         raise
+
+
+def fetch_vehicle_by_reg(vehicle_reg):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(vehicle_table)
+    
+    response = table.scan(FilterExpression=Attr('registration').eq(vehicle_reg))
+    items = response.get('Items', [])
+    
+    if items:
+        return items[0]  # Assuming registration numbers are unique; return the first match found
+    
+    return None  # If no match found
