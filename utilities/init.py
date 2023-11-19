@@ -22,13 +22,14 @@ def init():
     print("Begin initialisation!")
     check_user_existence(flask_app_user)
     user_arn = get_user_arn(flask_app_user)
-    check_s3_bucket(member_vehicle_images_bucket_name, user_arn)
+    check_s3_bucket(member_vehicle_images_bucket_name)
     check_dynamodb_table_exists(user_table, user_arn)
     check_dynamodb_table_exists(vehicle_table, user_arn)
     check_dynamodb_table_exists(vehicle_image_table, user_arn)
     check_folder_exists(member_vehicle_images_bucket_name, pending_images_folder)
     check_folder_exists(member_vehicle_images_bucket_name, approved_images_folder)
     create_folders_and_upload_images(member_vehicle_images_bucket_name, approved_images_folder)
+    grant_internet_read_access(member_vehicle_images_bucket_name)
     print("Application initialized!")
 
 def iterate_vehicle_and_image_urls(bucket_name, folder_name):
@@ -325,7 +326,7 @@ def create_iam_user(username):
         print(f"IAM user '{username}' already exists.")
 
 #check if bucket exists
-def check_s3_bucket(bucket_name, user_arn):  # Modify the function to accept user_arn
+def check_s3_bucket(bucket_name):  # Modify the function to accept user_arn
     s3 = boto3.client('s3')
     try:
         s3.head_bucket(Bucket=bucket_name)
@@ -334,23 +335,49 @@ def check_s3_bucket(bucket_name, user_arn):  # Modify the function to accept use
         # If a specific error code is raised, it means the bucket doesn't exist
         error_code = e.response.get('Error', {}).get('Code')
         if error_code == '404':
-            create_s3_bucket(bucket_name, user_arn)
+            create_s3_bucket(bucket_name)
         else:
             # Handle other errors if needed
             raise
 
-def create_s3_bucket(bucket_name, user_arn):
-    s3 = boto3.client('s3')
+def create_s3_bucket(bucket_name):
+    s3 = boto3.client('s3', region_name='us-east-1')  # Change 'us-east-1' to your desired region
     try:
+        # Create the S3 bucket
         s3.create_bucket(Bucket=bucket_name)
         print(f"Bucket '{bucket_name}' created successfully.")
         
-    except ClientError as e:
-        error_code = e.response.get('Error', {}).get('Code')
-        if error_code == 'BucketAlreadyOwnedByYou':
-            print(f"The bucket '{bucket_name}' already exists and is owned by you.")
-        else:
-            print(f"Error creating bucket '{bucket_name}': {e}")
+    except Exception as e:
+        print(f"Error creating or configuring bucket '{bucket_name}': {e}")
+
+
+import boto3
+
+def grant_internet_read_access(bucket_name):
+    s3 = boto3.client('s3')
+
+    bucket_policy = {
+        'Version': '2012-10-17',
+        'Statement': [{
+            'Effect': 'Allow',
+            'Principal': '*',
+            'Action': 's3:GetObject',
+            'Resource': f'arn:aws:s3:::{bucket_name}/*',
+            'Condition': {
+                'IpAddress': {'aws:SourceIp': '0.0.0.0/0'}  # Allows access from any IP
+            }
+        }]
+    }
+
+    # Convert the policy to a JSON string
+    bucket_policy_str = str(bucket_policy).replace("'", '"')
+
+    try:
+        # Apply the bucket policy
+        s3.put_bucket_policy(Bucket=bucket_name, Policy=bucket_policy_str)
+        print(f"Read access to the internet granted for bucket '{bucket_name}'.")
+    except Exception as e:
+        print(f"Error granting read access to the internet for bucket '{bucket_name}': {e}")
 
 
 def check_dynamodb_table_exists(table_name, user_arn):
