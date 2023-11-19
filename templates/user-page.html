@@ -83,21 +83,36 @@
     }
     
     function addVehicle(index) {
-    // Function to handle the button click event
-    const contentArea = document.getElementById('contentArea');
-    
-    // Change content to New Upload
-    contentArea.innerHTML = `
-        <h2>New Upload</h2>
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_image') }}">
-            <input type="file" id="fileInput" name="fileInput">
-            <button type="submit">Upload</button>
-        </form>
+    const selectedVehicle = vehicles[index - 1];
+    const contentArea = document.querySelector('.content');
+
+    // Construct the HTML to display the vehicle details
+    const detailsHTML = `
+        <h2>Details for ${selectedVehicle.reg}</h2>
+        <div class="vehicle-details">
+            <h3>Selected Vehicle Details</h3>
+            <p>Registration: ${selectedVehicle.reg}</p>
+            <p>VIN: ${selectedVehicle.vin}</p>
+            <p>Make: ${selectedVehicle.make}</p>
+            <p>Model: ${selectedVehicle.model}</p>
+            <!-- Add more details as needed -->
+        </div>
+        <div class="file-upload-panel">
+            <h3>Upload File</h3>
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                <input type="file" id="fileInput" name="fileInput">
+                <button type="submit">Upload</button>
+            </form>
+        </div>
         <div id="uploadGallery" class="image-gallery">
             <!-- Gallery view for uploaded files goes here -->
         </div>
     `;
+
+    // Display the vehicle details in the content area
+    contentArea.innerHTML = detailsHTML;
 }
+
 
 function uploadFile() {
     // Function to handle file upload
