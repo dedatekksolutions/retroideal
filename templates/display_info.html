@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Other meta tags and title -->
+</head>
+<body>
+    <div class="vehicle-info">
+        <h2>Vehicle Information</h2>
+        <p>Registration Number: {{ vehicle_details.reg }}</p>
+        <p>VIN: {{ vehicle_details.vin }}</p>
+        <p>Make: {{ vehicle_details.make }}</p>
+        <p>Model: {{ vehicle_details.model }}</p>
+        <!-- Add other vehicle details as needed -->
+    </div>
+
+    <div class="uploaded-image">
+        <h2>Uploaded Image</h2>
+        <img src="{{ image_url }}" alt="Uploaded Image">
+    </div>
+</body>
+</html>

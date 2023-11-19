@@ -78,7 +78,8 @@ from flask import Flask, render_template, redirect, request, url_for, session
 
 app.secret_key = "Ez45vGRo5KmMnJPueMLu48RCZiPawAqlDQc3FMVF"
 
-# Other routes and functions remain the same as in your original code
+from flask import Flask, render_template, redirect, request, url_for, session
+# Other import statements...
 
 @app.route("/upload_image", methods=["POST"])
 def upload_image():
@@ -86,16 +87,20 @@ def upload_image():
         file_data = request.files['fileInput']
         if file_data:
             # Upload the file to S3
+            uploaded_filename = str(uuid.uuid4())  # Generate a unique filename
             upload_image_to_s3(
                 bucket_name="retroideal-member-vehicle-images",
                 folder_name="pending-vehicle-images",
-                file_name=str(uuid.uuid4()),
+                file_name=uploaded_filename,
                 image_data=file_data.read()
             )
-            # Handle any other necessary operations
+            
+            # Add an entry to the database with a "pending" status
+            vehicle_reg = request.form.get("vehicle_reg")
+            add_pending_image_entry(vehicle_reg, uploaded_filename)  # Function to add to the database
+            
     return redirect(url_for("user_page"))
 
-from flask import render_template
 
 @app.route("/add_vehicle/<vehicle_reg>", methods=["GET"])
 def add_vehicle(vehicle_reg):
