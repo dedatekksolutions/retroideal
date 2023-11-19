@@ -72,6 +72,28 @@ def user_page():
     else:
         return redirect(url_for("display_users"))
 
+from flask import Flask, render_template, redirect, request, url_for, session
+# Other import statements
+
+
+app.secret_key = "Ez45vGRo5KmMnJPueMLu48RCZiPawAqlDQc3FMVF"
+
+# Other routes and functions remain the same as in your original code
+
+@app.route("/upload_image", methods=["POST"])
+def upload_image():
+    if request.method == "POST":
+        file_data = request.files['fileInput']
+        if file_data:
+            # Upload the file to S3
+            upload_image_to_s3(
+                bucket_name="retroideal-member-vehicle-images",
+                folder_name="pending-vehicle-images",
+                file_name=file_data.filename,
+                image_data=file_data.read()
+            )
+            # Handle any other necessary operations
+    return redirect(url_for("user_page"))
 
 
 if __name__ == "__main__":
