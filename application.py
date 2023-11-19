@@ -89,7 +89,7 @@ def upload_image():
             upload_image_to_s3(
                 bucket_name="retroideal-member-vehicle-images",
                 folder_name="pending-vehicle-images",
-                file_name=file_data.filename,
+                file_name=str(uuid.uuid4()),
                 image_data=file_data.read()
             )
             # Handle any other necessary operations

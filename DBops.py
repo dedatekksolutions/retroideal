@@ -53,7 +53,7 @@ def fetch_users():
 
 def upload_image_to_s3(bucket_name, folder_name, file_name, image_data):
     s3 = boto3.client('s3')
-
+    
     try:
         # Construct the S3 key using folder name and file name
         s3_key = f"{folder_name}/{file_name}"
