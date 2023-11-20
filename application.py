@@ -101,14 +101,13 @@ def upload_image():
             
     return redirect(url_for("user_page"))
 
-
 @app.route("/add_vehicle/<vehicle_reg>", methods=["GET"])
 def add_vehicle(vehicle_reg):
     # Fetch vehicle details using the vehicle registration number, assuming it's unique
     vehicle_details = fetch_vehicle_by_reg(vehicle_reg)  # Implement this function
-    
-    return render_template('new_upload.html', vehicle_reg=vehicle_reg, vehicle_details=vehicle_details)
 
+    # Pass the vehicle details to the template
+    return render_template('new_upload.html', vehicle_reg=vehicle_reg, vehicle_details=vehicle_details)
 
 
 if __name__ == "__main__":

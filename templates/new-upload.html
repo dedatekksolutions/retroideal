@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Upload</title>
-    <!-- Include any necessary CSS or scripts -->
+    <!-- Your head content -->
 </head>
 <body>
     <h2>New Upload</h2>
     <div id="vehicleDetails">
         <p>Registration: {{ vehicle_reg }}</p>
         <!-- Display other relevant vehicle details here -->
+        {% if vehicle_details %}
+            <p>Make: {{ vehicle_details.make }}</p>
+            <p>Model: {{ vehicle_details.model }}</p>
+            <!-- Display other vehicle details as needed -->
+        {% endif %}
     </div>
     <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_image') }}">
         <input type="file" id="fileInput" name="fileInput">

@@ -18,19 +18,7 @@ pending_images_folder="pending-vehicle-images"
 approved_images_folder="approved-vehicle-images"
 
 
-def init():
-    print("Begin initialisation!")
-    check_user_existence(flask_app_user)
-    user_arn = get_user_arn(flask_app_user)
-    check_s3_bucket(member_vehicle_images_bucket_name)
-    check_dynamodb_table_exists(user_table, user_arn)
-    check_dynamodb_table_exists(vehicle_table, user_arn)
-    check_dynamodb_table_exists(vehicle_image_table, user_arn)
-    check_folder_exists(member_vehicle_images_bucket_name, pending_images_folder)
-    check_folder_exists(member_vehicle_images_bucket_name, approved_images_folder)
-    create_folders_and_upload_images(member_vehicle_images_bucket_name, approved_images_folder)
-    grant_internet_read_access(member_vehicle_images_bucket_name)
-    print("Application initialized!")
+
 
 def iterate_vehicle_and_image_urls(bucket_name, folder_name):
     try:
@@ -379,6 +367,23 @@ def grant_internet_read_access(bucket_name):
     except Exception as e:
         print(f"Error granting read access to the internet for bucket '{bucket_name}': {e}")
 
+import boto3
+
+def get_s3_bucket_url(bucket_name):
+    s3 = boto3.client('s3')
+    try:
+        location = s3.get_bucket_location(Bucket=bucket_name)
+        region = location.get('LocationConstraint', 'us-east-1')  # Default to us-east-1 if no location constraint is returned
+        if region == 'us-east-1':
+            url = f"https://{bucket_name}.s3.amazonaws.com"
+        else:
+            url = f"https://{bucket_name}.s3.{region}.amazonaws.com"
+        return url
+    except Exception as e:
+        print(f"Error getting S3 bucket URL: {e}")
+        return None
+
+
 
 def check_dynamodb_table_exists(table_name, user_arn):
     dynamodb = boto3.client('dynamodb')
@@ -615,3 +620,22 @@ def delete_dynamodb_table(table_name):
         print(f"Error deleting DynamoDB table '{table_name}': {e}")
 
 
+def init():
+    print("Begin initialisation!")
+    check_user_existence(flask_app_user)
+    user_arn = get_user_arn(flask_app_user)
+    check_s3_bucket(member_vehicle_images_bucket_name)
+    check_dynamodb_table_exists(user_table, user_arn)
+    check_dynamodb_table_exists(vehicle_table, user_arn)
+    check_dynamodb_table_exists(vehicle_image_table, user_arn)
+    check_folder_exists(member_vehicle_images_bucket_name, pending_images_folder)
+    check_folder_exists(member_vehicle_images_bucket_name, approved_images_folder)
+    create_folders_and_upload_images(member_vehicle_images_bucket_name, approved_images_folder)
+    grant_internet_read_access(member_vehicle_images_bucket_name)
+    # Usage
+    bucket_name = "your-bucket-name"
+    bucket_url = get_s3_bucket_url(bucket_name)
+    if bucket_url:
+        print(f"S3 Bucket URL: {bucket_url}")
+
+    print("Application initialized!")
