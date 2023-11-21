@@ -84,27 +84,10 @@
     
     function addVehicle(index) {
     const selectedVehicle = vehicles[index - 1];
-    const contentArea = document.getElementById('contentArea');
 
-    // Change content to New Upload and display vehicle details
-    contentArea.innerHTML = `
-        <h2>New Upload for ${selectedVehicle.reg}</h2>
-        <p>VIN: ${selectedVehicle.vin}</p>
-        <p>Make: ${selectedVehicle.make}</p>
-        <p>Model: ${selectedVehicle.model}</p>
-        <!-- You can display more vehicle details here -->
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_image') }}">
-            <input type="file" id="fileInput" name="fileInput">
-            <!-- Pass vehicle registration for reference -->
-            <input type="hidden" name="vehicle_reg" value="${selectedVehicle.reg}">
-            <button type="submit">Upload</button>
-        </form>
-        <div id="uploadGallery" class="image-gallery">
-            <!-- Gallery view for uploaded files goes here -->
-        </div>
-    `;
+    // Redirect to the add vehicle route with the registration number as a parameter
+    window.location.href = `/add_vehicle/${selectedVehicle.reg}`;
 }
-
 
 function uploadFile() {
     // Function to handle file upload

@@ -18,10 +18,19 @@
         <input type="file" id="fileInput" name="fileInput">
         <!-- Pass vehicle registration for reference -->
         <input type="hidden" name="vehicle_reg" value="{{ vehicle_reg }}">
-        <button type="submit">Upload</button>
+        <button type="submit" style="margin-right: 10px;">Upload</button>
+        <button type="button" onclick="verifyFunction()">Verify</button>
     </form>
     <div id="uploadGallery" class="image-gallery">
         <!-- Gallery view for uploaded files goes here -->
     </div>
+
+    <script>
+        function verifyFunction() {
+            // Add your verification logic here
+            // For example, you can perform verification actions or call an API
+            alert('Verification process initiated.');
+        }
+    </script>
 </body>
 </html>

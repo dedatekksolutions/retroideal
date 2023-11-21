@@ -1,14 +1,9 @@
 from flask import Flask, render_template, redirect, request, url_for, session  
-from datetime import datetime, timedelta
 from boto3.dynamodb.conditions import Attr
-import boto3
-from botocore.exceptions import ClientError
-import secrets
-import time
-from DBops import *
+from operations.dynamoDBops import *
 from utilities.init import *
 from utilities.helpers import *
-
+from operations.s3ops import *
 
 app = Flask(__name__)
 
@@ -72,15 +67,6 @@ def user_page():
     else:
         return redirect(url_for("display_users"))
 
-from flask import Flask, render_template, redirect, request, url_for, session
-# Other import statements
-
-
-app.secret_key = "Ez45vGRo5KmMnJPueMLu48RCZiPawAqlDQc3FMVF"
-
-from flask import Flask, render_template, redirect, request, url_for, session
-# Other import statements...
-
 @app.route("/upload_image", methods=["POST"])
 def upload_image():
     if request.method == "POST":
@@ -88,7 +74,7 @@ def upload_image():
         if file_data:
             # Upload the file to S3
             uploaded_filename = str(uuid.uuid4())  # Generate a unique filename
-            upload_image_to_s3(
+            upload_image_to_s3_passdata(
                 bucket_name="retroideal-member-vehicle-images",
                 folder_name="pending-vehicle-images",
                 file_name=uploaded_filename,
@@ -107,8 +93,7 @@ def add_vehicle(vehicle_reg):
     vehicle_details = fetch_vehicle_by_reg(vehicle_reg)  # Implement this function
 
     # Pass the vehicle details to the template
-    return render_template('new_upload.html', vehicle_reg=vehicle_reg, vehicle_details=vehicle_details)
-
+    return render_template('new-upload.html', vehicle_reg=vehicle_reg, vehicle_details=vehicle_details)
 
 if __name__ == "__main__":
     #delete_resources()
