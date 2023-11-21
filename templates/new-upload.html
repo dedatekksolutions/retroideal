@@ -1,36 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Your head content -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Upload</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h2>New Upload</h2>
-    <div id="vehicleDetails">
-        <p>Registration: {{ vehicle_reg }}</p>
-        <!-- Display other relevant vehicle details here -->
-        {% if vehicle_details %}
-            <p>Make: {{ vehicle_details.make }}</p>
-            <p>Model: {{ vehicle_details.model }}</p>
-            <!-- Display other vehicle details as needed -->
+    <header class="navbar">
+        <span style="font-size:30px;cursor:pointer" onclick="openSidePanel()">&#9776;</span>
+        <div class="banner-section">
+            <span class="retro-font">Retro Ideal</span>
+            <p class="cursive-font">{{ first_name }}</p>
+        </div>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+    </header>
+    <div class="side-panel" id="sidePanel">
+        <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
+        <h1>Vehicles</h1>
+        {% if vehicles %}
+            {% for vehicle in vehicles %}
+                <div class="vehicle-item">
+                    <a href="#" onclick="loadVehicleDetails({{ loop.index }})">{{ vehicle.reg }}</a>
+                    <button class="add-button" onclick="addVehicle({{ loop.index }})">+</button>
+                </div>
+            {% endfor %}
         {% endif %}
+    </div>    
+    <div class="content" id="contentArea">
+        <h2>New Upload</h2>
+        <div id="vehicleDetails">
+            <p>Registration: {{ vehicle_reg }}</p>
+            <!-- Display other relevant vehicle details here -->
+            {% if vehicle_details %}
+                <p>Make: {{ vehicle_details.make }}</p>
+                <p>Model: {{ vehicle_details.model }}</p>
+                <!-- Display other vehicle details as needed -->
+            {% endif %}
+        </div>
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_image') }}">
+            <input type="file" id="fileInput" name="fileInput">
+            <!-- Pass vehicle registration for reference -->
+            <input type="hidden" name="vehicle_reg" value="{{ vehicle_reg }}">
+            <button type="submit" style="margin-right: 10px;">Upload</button>
+            
+            <form id="verifyForm">
+                <!-- Other form elements -->
+            
+                <button type="button" onclick="verifyFunction()">Verify</button>
+            </form>
+            
+            <div id="verificationResult"></div>
+
+
+        </form>
+        <div id="uploadGallery" class="image-gallery">
+            <!-- Gallery view for uploaded files goes here -->
+        </div>
     </div>
-    <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_image') }}">
-        <input type="file" id="fileInput" name="fileInput">
-        <!-- Pass vehicle registration for reference -->
-        <input type="hidden" name="vehicle_reg" value="{{ vehicle_reg }}">
-        <button type="submit" style="margin-right: 10px;">Upload</button>
-        <button type="button" onclick="verifyFunction()">Verify</button>
-    </form>
-    <div id="uploadGallery" class="image-gallery">
-        <!-- Gallery view for uploaded files goes here -->
+    <div class="footer">
+        &copy; 2023 Your Company
     </div>
 
+    <!-- Script to handle side panel open/close -->
     <script>
         function verifyFunction() {
-            // Add your verification logic here
-            // For example, you can perform verification actions or call an API
-            alert('Verification process initiated.');
+    fetch('https://ok9ogdv6x0.execute-api.us-east-1.amazonaws.com/prod/DynamoDBManager', {
+        method: 'POST',
+        body: JSON.stringify({}), // Empty body for now
+    })
+    .then(response => response.text())
+    .then(data => {
+        const result = document.getElementById('verificationResult');
+        result.textContent = data; // Update the text content with the API response
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Handle error scenarios if needed
+    });
+}
+
+
+
+         {% if vehicles %}
+        const vehicles = {{ vehicles | tojson | safe }};
+        console.log('Vehicles:', vehicles); // Output the vehicles array to the console for debugging
+        {% endif %}
+
+        {% if vehicle_images %}
+            const vehicle_images = {{ vehicle_images | tojson | safe }};
+        {% else %}
+            const vehicle_images = []; // Provide a default empty array if vehicle_images is not available
+        {% endif %}
+        
+        function openSidePanel() {
+            document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
         }
+
+        function closeSidePanel() {
+            document.getElementById("sidePanel").style.width = "0";
+        }
+
+        function loadVehicleDetails(index) {
+        const selectedVehicle = vehicles[index - 1];
+        const detailsContainer = document.getElementById('vehicleDetails');
+        const galleryContainer = document.getElementById('imageGallery');
+
+        const detailsHTML = `
+            <h2>Details for ${selectedVehicle.reg}</h2>
+            <p>VIN: ${selectedVehicle.vin}</p>
+            <p>Make: ${selectedVehicle.make}</p>
+            <p>Model: ${selectedVehicle.model}</p>
+            <!-- Add more details as needed -->
+        `;
+        detailsContainer.innerHTML = detailsHTML;
+
+        // Filter vehicle images for the selected vehicle
+        const selectedVehicleImages = vehicle_images.filter(image => image['vehicle-id'] === selectedVehicle.vh_id);
+
+        let galleryHTML = '<h2>Image Gallery</h2><div class="gallery">';
+
+        selectedVehicleImages.forEach(image => {
+            galleryHTML += `
+                <img src="${image['image-url']}" alt="${image['filename']}" class="gallery-image">
+                <!-- You can add more image details if needed -->
+            `;
+        });
+        galleryHTML += '</div>';
+        galleryContainer.innerHTML = galleryHTML;
+    }
+        
+        function addVehicle(index) {
+            const selectedVehicle = vehicles[index - 1];
+
+            // Redirect to the add vehicle route with the registration number as a parameter
+            window.location.href = `/add_vehicle/${selectedVehicle.reg}`;
+        }
+        
     </script>
 </body>
 </html>

@@ -88,35 +88,6 @@
     // Redirect to the add vehicle route with the registration number as a parameter
     window.location.href = `/add_vehicle/${selectedVehicle.reg}`;
 }
-
-function uploadFile() {
-    // Function to handle file upload
-    const fileInput = document.getElementById('fileInput');
-    const uploadGallery = document.getElementById('uploadGallery');
-
-    // Perform file upload actions, e.g., display uploaded images
-    // For demonstration purposes, let's assume there's an array of uploaded images
-    const uploadedImages = [
-        'image1.jpg',
-        'image2.jpg',
-        'image3.jpg'
-        // ... add more images as needed
-    ];
-
-    // Display uploaded images in the gallery
-    let galleryHTML = '<h3>Uploaded Images</h3><div class="gallery">';
-
-    uploadedImages.forEach(image => {
-        galleryHTML += `
-            <img src="${image}" alt="Uploaded Image" class="gallery-image">
-        `;
-    });
-    galleryHTML += '</div>';
-    uploadGallery.innerHTML = galleryHTML;
-}
-
-
-
     </script>
 </body>
 </html>

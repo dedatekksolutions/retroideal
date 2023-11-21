@@ -1,0 +1,11 @@
+<a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
+
+<h1>Vehicles</h1>
+{% for vehicle in vehicles %}
+    <div class="vehicle-item">
+        <a href="#" onclick="loadVehicleDetails({{ loop.index }})">{{ vehicle.reg }}</a>
+        <button class="add-button" onclick="addVehicle({{ loop.index }})">+</button>
+    </div>
+{% endfor %}
+<a href="{{ url_for('user_page') }}" class="home-icon">Home</a>
+

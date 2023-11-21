@@ -92,8 +92,12 @@ def add_vehicle(vehicle_reg):
     # Fetch vehicle details using the vehicle registration number, assuming it's unique
     vehicle_details = fetch_vehicle_by_reg(vehicle_reg)  # Implement this function
 
-    # Pass the vehicle details to the template
-    return render_template('new-upload.html', vehicle_reg=vehicle_reg, vehicle_details=vehicle_details)
+    # Fetch the vehicles data for the current user
+    user_vehicles = fetch_vehicles_by_userid(session["user"]["userid"])
+
+    # Pass both the vehicle details and vehicles data to the template
+    return render_template('new-upload.html', vehicle_reg=vehicle_reg, vehicle_details=vehicle_details, vehicles=user_vehicles)
+
 
 if __name__ == "__main__":
     #delete_resources()
