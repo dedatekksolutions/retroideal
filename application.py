@@ -55,13 +55,17 @@ def user_home():
             # Fetch image URLs for the user's vehicles
             image_urls = fetch_images_by_userid(userid)
 
+            # Fetch all vehicle data for the user
+            vehicles = fetch_vehicles_by_userid(userid)
+
             # Print statements for debugging
             print("User:", user)
             print("Image URLs:", image_urls)
+            print("Vehicles:", vehicles)
 
             return render_template("user-home.html", first_name=first_name, last_name=last_name, image_urls=image_urls)
 
-    # If user is not authenticated, redirect to the login page
+    # If the user is not authenticated, redirect to the login page
     return redirect(url_for("display_users"))
 
 @app.route("/logout")

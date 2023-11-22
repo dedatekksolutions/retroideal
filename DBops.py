@@ -56,3 +56,12 @@ def fetch_images_by_userid(userid):
     except Exception as e:
         print("Error fetching images:", e)
         return []
+    
+def fetch_vehicles_by_userid(userid):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(vehicle_table)
+    
+    response = table.scan(FilterExpression=Attr('userid').eq(userid))
+    items = response['Items']
+    
+    return items
