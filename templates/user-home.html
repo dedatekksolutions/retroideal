@@ -14,8 +14,8 @@
                 <span class="retro-font">Retro Ideal</span>
             </a>
             <a href="/user_home" style="text-decoration: none; color: white;">
-                <p class="cursive-font">John Doe</p>
-            </a>
+                <p class="cursive-font">{{ first_name }}</p>
+            </a>            
         </div>
         <button onclick="logout()" class="logout-btn">Logout</button>
     </header>
@@ -27,7 +27,12 @@
         <a href="#" onclick="loadVehicleDetails(2)">Vehicle 2</a>
     </div>
     <div class="content">
-        <!-- Blank content area -->
+        <!-- Display images -->
+        <div id="imageGallery">
+            {% for image_url in image_urls %}
+                <img src="{{ image_url }}" alt="Vehicle Image" class="gallery-image">
+            {% endfor %}
+        </div>
     </div>
     <div class="footer">
         <!-- Placeholder content in the footer -->
@@ -37,33 +42,71 @@
     <!-- Script to handle side panel open/close and load vehicle details -->
     <script>
         const vehicles = []; // Empty array for placeholder
-        const vehicle_images = []; // Empty array for placeholder
+    const vehicle_images = []; // Empty array for placeholder
 
-        function openSidePanel() {
-            document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
-        }
+    function openSidePanel() {
+        document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
+        loadVehicleDetails();
+    }
 
-        function closeSidePanel() {
-            document.getElementById("sidePanel").style.width = "0";
-        }
+    function closeSidePanel() {
+        document.getElementById("sidePanel").style.width = "0";
+    }
 
-        function loadVehicleDetails(index) {
-            // Placeholder function for loading vehicle details
-        }
+    function loadVehicleDetails() {
+        const sidePanel = document.getElementById("sidePanel");
 
-        function logout() {
-            // Clear the session data
-            fetch('/logout', { method: 'GET' })
+        // Check if the user is authenticated
+        if (sidePanel && '{{ "user" in session }}') {
+            const userId = '{{ session["user"]["userid"] }}';
+
+            // Fetch registration numbers for the user's vehicles
+            fetch(`/user_home/${userId}/vehicles`)
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Logout successful');
-                    // Redirect to the login page or any other route as needed
-                    window.location.href = '/login';
+                    // Update the side panel with fetched registration numbers
+                    updateSidePanel(data);
                 })
                 .catch(error => {
-                    console.error('Logout failed:', error);
+                    console.error('Failed to fetch vehicle details:', error);
                 });
         }
+    }
+
+    function updateSidePanel(registrationNumbers) {
+        const sidePanelContent = document.getElementById("sidePanelContent");
+
+        if (sidePanelContent) {
+            // Clear existing content
+            sidePanelContent.innerHTML = '';
+
+            // Add new registration numbers to the side panel
+            registrationNumbers.forEach(regNumber => {
+                const a = document.createElement("a");
+                a.href = '#';
+                a.onclick = function() {
+                    // Handle click on registration number (if needed)
+                };
+                a.appendChild(document.createTextNode(regNumber));
+
+                sidePanelContent.appendChild(a);
+            });
+        }
+    }
+
+    function logout() {
+        // Clear the session data
+        fetch('/logout', { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Logout successful');
+                // Redirect to the login page or any other route as needed
+                window.location.href = '/login';
+            })
+            .catch(error => {
+                console.error('Logout failed:', error);
+            });
+    }
     </script>
 </body>
 </html>

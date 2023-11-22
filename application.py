@@ -32,15 +32,15 @@ def login():
             if verify_hash(password, stored_password_hash, stored_salt):
                 # If authentication is successful, store user information in the session
                 session["user"] = {
-                    "userid": user.get("userid"),
-                    "username": user.get("username"),
-                    # Add other user details as needed
+                    "userid": user.get("userid")
                 }
+
+                # Fetch user details
+                user_details = fetch_user_by_userid(session["user"]["userid"])
+                first_name = user_details.get("firstname")
+
                 # Redirect to the user page or any other route as needed
                 return redirect(url_for("user_home"))
-
-    # If login fails or user does not exist, redirect back to the login page
-    return redirect(url_for("display_users"))
 
 @app.route("/user_home")
 def user_home():
@@ -52,7 +52,14 @@ def user_home():
             first_name = user.get("firstname")
             last_name = user.get("lastname")
 
-            return render_template("user-home.html", first_name=first_name, last_name=last_name)
+            # Fetch image URLs for the user's vehicles
+            image_urls = fetch_images_by_userid(userid)
+
+            # Print statements for debugging
+            print("User:", user)
+            print("Image URLs:", image_urls)
+
+            return render_template("user-home.html", first_name=first_name, last_name=last_name, image_urls=image_urls)
 
     # If user is not authenticated, redirect to the login page
     return redirect(url_for("display_users"))

@@ -34,3 +34,25 @@ def fetch_users():
     table = dynamodb.Table(user_table)
     response = table.scan()
     return response['Items']
+
+def fetch_images_by_userid(userid):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(vehicle_image_table)
+
+    try:
+        # Query the vehicle image table based on userid
+        response = table.scan(FilterExpression=Attr('userid').eq(userid))
+        items = response['Items']
+
+        # Extract image URLs from the items
+        image_urls = [item['image-url'] for item in items]
+
+        # Print statements for debugging
+        print("Image URLs for userid:", userid)
+        print(image_urls)
+
+        return image_urls
+
+    except Exception as e:
+        print("Error fetching images:", e)
+        return []
