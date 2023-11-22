@@ -21,10 +21,9 @@
     </header>
     <div class="side-panel" id="sidePanel">
         <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
-        <!-- Placeholder content for the side panel -->
+        <!-- Display registration numbers for the user's vehicles -->
         <h1>Vehicles</h1>
-        <a href="#" onclick="loadVehicleDetails(1)">Vehicle 1</a>
-        <a href="#" onclick="loadVehicleDetails(2)">Vehicle 2</a>
+        <div id="sidePanelContent"></div>
     </div>
     <div class="content">
         <!-- Display images -->
@@ -38,12 +37,8 @@
         <!-- Placeholder content in the footer -->
         &copy; 2023 Your Company
     </div>
-
-    <!-- Script to handle side panel open/close and load vehicle details -->
-    <script>
-        const vehicles = []; // Empty array for placeholder
-    const vehicle_images = []; // Empty array for placeholder
-
+<!-- Script to handle side panel open/close and load vehicle details -->
+<script>
     function openSidePanel() {
         document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
         loadVehicleDetails();
@@ -54,16 +49,24 @@
     }
 
     function loadVehicleDetails() {
-        const sidePanel = document.getElementById("sidePanel");
+        const sidePanelContent = document.getElementById("sidePanelContent");
 
         // Check if the user is authenticated
-        if (sidePanel && '{{ "user" in session }}') {
+        if (sidePanelContent && '{{ "user" in session }}') {
             const userId = '{{ session["user"]["userid"] }}';
 
             // Fetch registration numbers for the user's vehicles
             fetch(`/user_home/${userId}/vehicles`)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    // Log the data to the console for debugging
+                    console.log('Fetched data:', data);
+
                     // Update the side panel with fetched registration numbers
                     updateSidePanel(data);
                 })
@@ -73,7 +76,7 @@
         }
     }
 
-    function updateSidePanel(registrationNumbers) {
+    function updateSidePanel(vehicles) {
         const sidePanelContent = document.getElementById("sidePanelContent");
 
         if (sidePanelContent) {
@@ -81,13 +84,13 @@
             sidePanelContent.innerHTML = '';
 
             // Add new registration numbers to the side panel
-            registrationNumbers.forEach(regNumber => {
+            vehicles.forEach(vehicle => {
                 const a = document.createElement("a");
                 a.href = '#';
                 a.onclick = function() {
                     // Handle click on registration number (if needed)
                 };
-                a.appendChild(document.createTextNode(regNumber));
+                a.appendChild(document.createTextNode(vehicle.reg));
 
                 sidePanelContent.appendChild(a);
             });
@@ -107,6 +110,7 @@
                 console.error('Logout failed:', error);
             });
     }
-    </script>
+</script>
+
 </body>
 </html>

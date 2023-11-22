@@ -41,6 +41,14 @@ def login():
 
                 # Redirect to the user page or any other route as needed
                 return redirect(url_for("user_home"))
+            
+@app.route("/user_home/<userid>/vehicles")
+def get_user_vehicles(userid):
+    if "user" in session and session["user"]["userid"] == userid:
+        vehicles = fetch_vehicles_by_userid(userid)
+        return jsonify(vehicles)
+    else:
+        return jsonify({"error": "User not authenticated or unauthorized"}), 401
 
 @app.route("/user_home")
 def user_home():
