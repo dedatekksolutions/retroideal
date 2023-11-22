@@ -82,8 +82,25 @@ def logout():
     session.pop("user", None)
     return jsonify({"message": "Logout successful"})
 
+@app.route("/user_home/<vehicle_id>/images")
+def get_vehicle_images(vehicle_id):
+    # Fetch images for the specified vehicle_id from the retroideal-vehicle-image-table
+    images = fetch_images_by_vehicle_id(vehicle_id)
+    
+    return jsonify(images)
+
+@app.route("/upload/<vehicle_id>")
+def upload_page(vehicle_id):
+    # Fetch additional details for the vehicle using the vehicle_id
+    vehicle_details = fetch_vehicle_by_id(vehicle_id)
+
+    # Render the upload page with the vehicle details
+    return render_template("user-upload.html", vehicle_details=vehicle_details)
+
 
 if __name__ == "__main__":
     #init()
     #delete_resources()
     app.run(host='0.0.0.0')
+
+

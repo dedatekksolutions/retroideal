@@ -34,12 +34,21 @@
             <h2>Welcome</h2>
             <p>Select a vehicle from the side panel to view images.</p>
         </div>
-    
-        <!-- Display images -->
+    <!-- Upload component -->
+        <div id="UploadComponent">
+            <h2>Upload Component</h2>
+            <form id="uploadForm">
+                <!-- File input for browsing -->
+                <input type="file" id="fileInput" accept="image/*" />
+                <!-- Upload button -->
+                <button type="button" onclick="uploadFile()">Upload</button>
+            </form>
+        </div>
         <div id="imageGallery">
             <!-- Images will be dynamically loaded here based on user interaction -->
         </div>
     </div>
+    
     <div class="footer">
         <!-- Placeholder content in the footer -->
         &copy; 2023 Your Company
@@ -81,6 +90,26 @@
                     console.error('Failed to fetch vehicle details:', error);
                 });
         }
+    }
+
+    function uploadFile() {
+        // Get the selected file
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+
+        // Get the filename
+        const filenameInput = document.getElementById('filenameInput');
+        const filename = filenameInput.value;
+
+        // Perform the file upload logic here (e.g., using Fetch API or FormData)
+
+        // For demonstration purposes, log the file details
+        console.log('File:', file);
+        console.log('Filename:', filename);
+
+        // You can implement the actual file upload logic here
+        // For example, you can use the Fetch API to send the file to the server
+        // and handle the upload on the server side.
     }
 
     function updateContentWithVehicleImages(vehicleId) {

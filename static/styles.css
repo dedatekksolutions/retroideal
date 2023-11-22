@@ -1,4 +1,11 @@
-/* Navbar styles */
+body{
+    color: #d8d8d8; 
+}
+
+.content{
+    color: #111;
+}
+
 .navbar {
     display: flex;
     justify-content: space-between;
@@ -53,6 +60,7 @@
     top: 0;
     left: 0;
     background-color: #111;
+    color: #afaeae;
     overflow-x: hidden;
     transition: 0.5s;
     padding-top: 60px;
@@ -62,7 +70,16 @@
     padding: 8px 8px 8px 32px;
     text-decoration: none;
     font-size: 25px;
-    color: #818181;
+    color: #afaeae;
+    display: block;
+    transition: 0.3s;
+}
+
+.side-panel h1 {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #d8d8d8;
     display: block;
     transition: 0.3s;
 }
@@ -76,3 +93,33 @@
     top: 0;
     right: 25px;
 }
+
+.side-panel a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #d8d8d8; /* Change the initial color */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: 0.3s;
+}
+
+.side-panel a:hover {
+    color: #f1f1f1;
+}
+
+.side-panel .close-btn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+}
+
+/* Style for the "+" icon */
+.side-panel a .plus-icon {
+    border: 2px solid #adadad; /* Add border around the "+" icon */
+    padding: 5px; /* Add padding to the "+" icon */
+    margin-left: 10px; /* Add space between the registration number and the "+" icon */
+}
+
+
