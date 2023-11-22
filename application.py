@@ -76,5 +76,5 @@ def user_page():
 
 if __name__ == "__main__":
     #delete_resources()
-    init()
+    #init()
     app.run(host='0.0.0.0')

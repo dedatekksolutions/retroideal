@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ vehicle_details.reg }} Details</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header class="navbar">
+        <!-- Similar header content as in your existing template -->
+    </header>
+    <div class="content">
+        <!-- Display the vehicle details -->
+        <h2>Details for {{ vehicle_details.reg }}</h2>
+        <p>VIN: {{ vehicle_details.vin }}</p>
+        <p>Make: {{ vehicle_details.make }}</p>
+        <p>Model: {{ vehicle_details.model }}</p>
+        <!-- Add more details as needed -->
+
+        <!-- Add a link to go back to the user page -->
+        <a href="{{ url_for('user_page') }}">Back to User Page</a>
+    </div>
+    <div class="footer">
+        &copy; 2023 Your Company
+    </div>
+</body>
+</html>
