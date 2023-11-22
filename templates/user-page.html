@@ -11,34 +11,30 @@
         <span style="font-size:30px;cursor:pointer" onclick="openSidePanel()">&#9776;</span>
         <div class="banner-section">
             <span class="retro-font">Retro Ideal</span>
-            <p class="cursive-font">{{ first_name }}</p>
+            <p class="cursive-font">John Doe</p>
         </div>
         <button onclick="logout()" class="logout-btn">Logout</button>
     </header>
     <div class="side-panel" id="sidePanel">
         <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
+        <!-- Placeholder content for the side panel -->
         <h1>Vehicles</h1>
-        {% for vehicle in vehicles %}
-            <a href="#" onclick="loadVehicleDetails({{ loop.index }})">{{ vehicle.reg }}</a>
-        {% endfor %}
+        <a href="#" onclick="loadVehicleDetails(1)">Vehicle 1</a>
+        <a href="#" onclick="loadVehicleDetails(2)">Vehicle 2</a>
     </div>
     <div class="content">
-        <h2>Selected Vehicle Details</h2>
-        <div id="vehicleDetails">
-            <!-- Details for the selected vehicle will be populated here -->
-        </div>
-        <div id="imageGallery">
-            <!-- Image gallery for the selected vehicle will be displayed here -->
-        </div>
+        <!-- Blank content area -->
     </div>
     <div class="footer">
+        <!-- Placeholder content in the footer -->
         &copy; 2023 Your Company
     </div>
 
-    <!-- Script to handle side panel open/close -->
+    <!-- Script to handle side panel open/close and load vehicle details -->
     <script>
-        const vehicles = {{ vehicles | tojson | safe }};
-        const vehicle_images = {{ vehicle_images | tojson | safe }};
+        const vehicles = []; // Empty array for placeholder
+        const vehicle_images = []; // Empty array for placeholder
+
         function openSidePanel() {
             document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
         }
@@ -47,38 +43,23 @@
             document.getElementById("sidePanel").style.width = "0";
         }
 
-        console.log('Vehicles:', vehicles); // Output the vehicles array to the console for debugging
-    
         function loadVehicleDetails(index) {
-        const selectedVehicle = vehicles[index - 1];
-        const detailsContainer = document.getElementById('vehicleDetails');
-        const galleryContainer = document.getElementById('imageGallery');
+            // Placeholder function for loading vehicle details
+        }
 
-        const detailsHTML = `
-            <h2>Details for ${selectedVehicle.reg}</h2>
-            <p>VIN: ${selectedVehicle.vin}</p>
-            <p>Make: ${selectedVehicle.make}</p>
-            <p>Model: ${selectedVehicle.model}</p>
-            <!-- Add more details as needed -->
-        `;
-        detailsContainer.innerHTML = detailsHTML;
-
-        // Filter vehicle images for the selected vehicle
-        const selectedVehicleImages = vehicle_images.filter(image => image['vehicle-id'] === selectedVehicle.vh_id);
-
-        let galleryHTML = '<h2>Image Gallery</h2><div class="gallery">';
-
-        selectedVehicleImages.forEach(image => {
-            galleryHTML += `
-                <img src="${image['image-url']}" alt="${image['filename']}" class="gallery-image">
-                <!-- You can add more image details if needed -->
-            `;
+        function logout() {
+    // Clear the session data
+    fetch('/logout', { method: 'GET' })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Logout successful');
+            // Redirect to the login page or any other route as needed
+            window.location.href = '/login';
+        })
+        .catch(error => {
+            console.error('Logout failed:', error);
         });
-        galleryHTML += '</div>';
-        galleryContainer.innerHTML = galleryHTML;
-    }
-    console.log('Vehicles:', vehicles);
-    console.log('Vehicle images:', vehicle_images);
+}
 
 
     </script>
