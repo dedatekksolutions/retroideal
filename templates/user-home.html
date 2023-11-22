@@ -10,8 +10,12 @@
     <header class="navbar">
         <span style="font-size:30px;cursor:pointer" onclick="openSidePanel()">&#9776;</span>
         <div class="banner-section">
-            <span class="retro-font">Retro Ideal</span>
-            <p class="cursive-font">John Doe</p>
+            <a href="/" style="text-decoration: none; color: white;">
+                <span class="retro-font">Retro Ideal</span>
+            </a>
+            <a href="/user_home" style="text-decoration: none; color: white;">
+                <p class="cursive-font">John Doe</p>
+            </a>
         </div>
         <button onclick="logout()" class="logout-btn">Logout</button>
     </header>
@@ -48,20 +52,18 @@
         }
 
         function logout() {
-    // Clear the session data
-    fetch('/logout', { method: 'GET' })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Logout successful');
-            // Redirect to the login page or any other route as needed
-            window.location.href = '/login';
-        })
-        .catch(error => {
-            console.error('Logout failed:', error);
-        });
-}
-
-
+            // Clear the session data
+            fetch('/logout', { method: 'GET' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Logout successful');
+                    // Redirect to the login page or any other route as needed
+                    window.location.href = '/login';
+                })
+                .catch(error => {
+                    console.error('Logout failed:', error);
+                });
+        }
     </script>
 </body>
 </html>

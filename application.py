@@ -37,13 +37,13 @@ def login():
                     # Add other user details as needed
                 }
                 # Redirect to the user page or any other route as needed
-                return redirect(url_for("user_page"))
+                return redirect(url_for("user_home"))
 
     # If login fails or user does not exist, redirect back to the login page
     return redirect(url_for("display_users"))
 
-@app.route("/user_page")
-def user_page():
+@app.route("/user_home")
+def user_home():
     if "user" in session:
         userid = session["user"]["userid"]
         user = fetch_user_by_userid(userid)
@@ -52,7 +52,7 @@ def user_page():
             first_name = user.get("firstname")
             last_name = user.get("lastname")
 
-            return render_template("user-page.html", first_name=first_name, last_name=last_name)
+            return render_template("user-home.html", first_name=first_name, last_name=last_name)
 
     # If user is not authenticated, redirect to the login page
     return redirect(url_for("display_users"))
@@ -65,4 +65,6 @@ def logout():
 
 
 if __name__ == "__main__":
+    #init()
+    #delete_resources()
     app.run(host='0.0.0.0')

@@ -47,13 +47,13 @@ def iterate_vehicle_and_image_urls(bucket_name, folder_name):
                 if index < len(images):  # Ensure the index is within the range of images
                     vehicle_id = vehicle.get('vh_id')  # Assuming 'vh_id' key exists in vehicle JSON
                     image_url = images[index].get('url')  # Extracting 'url' from the image entry
-                    user_id = vehicle.get('userid')
+                    userid = vehicle.get('userid')
                     approval = "approved"
                     purpose = str(datetime.now())
                     image_id = str(uuid.uuid4())
                     upload_image_to_s3_from_url(bucket_name, folder_name, image_id, image_url)
                     path, image_url = get_image_url_and_path(bucket_name, folder_name, image_id)
-                    add_entry_to_vehicle_image_table(vehicle_image_table, image_id, user_id, vehicle_id, image_url, approval, purpose, image_id, path)
+                    add_entry_to_vehicle_image_table(vehicle_image_table, image_id, userid, vehicle_id, image_url, approval, purpose, image_id, path)
     except FileNotFoundError:
         print("File 'initial_vehicles.json' or 'initial_images.json' not found.")
         pass
@@ -87,13 +87,13 @@ def get_image_url_and_path(bucket_name, folder_name, image_id):
 
     return file_name, image_url
 
-def add_entry_to_vehicle_image_table(table_name, image_id, user_id, vehicle_id, image_url, status, purpose, filename, path):
+def add_entry_to_vehicle_image_table(table_name, image_id, userid, vehicle_id, image_url, status, purpose, filename, path):
     dynamodb = boto3.client('dynamodb')
 
     # Define item attributes
     item = {
         'image-id': {'S': image_id},
-        'user-id': {'S': user_id},
+        'userid': {'S': userid},
         'vehicle-id': {'S': vehicle_id},
         'image-url': {'S': image_url},
         'status': {'S': status},
@@ -146,7 +146,7 @@ def create_vehicle_images_table(table_name, user_arn):
     # Define table attributes
     table_attributes = [
         {'AttributeName': 'image-id', 'AttributeType': 'S'},
-        {'AttributeName': 'user-id', 'AttributeType': 'S'},
+        {'AttributeName': 'userid', 'AttributeType': 'S'},
         {'AttributeName': 'vehicle-id', 'AttributeType': 'S'},
         {'AttributeName': 'image-url', 'AttributeType': 'S'},
         {'AttributeName': 'status', 'AttributeType': 'S'},

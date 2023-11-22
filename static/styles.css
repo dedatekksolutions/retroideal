@@ -1,115 +1,78 @@
+/* Navbar styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+}
 
-        /* Navbar styles */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #333;
-            color: white;
-            padding: 10px 20px;
-        }
+/* Retro Ideal font styling */
+.retro-font {
+    font-family: 'Your Retro Font', cursive; /* Add your desired retro font family */
+    font-size: 24px; /* Adjust font size */
+    cursor: pointer;
+}
 
-        /* Retro Ideal font styling */
-        .retro-font {
-            font-family: 'Your Retro Font', cursive; /* Add your desired retro font family */
-            font-size: 24px; /* Adjust font size */
-        }
+/* Welcome section styling */
+.banner-section {
+    text-align: center;
+}
 
-        /* Welcome section styling */
-        .banner-section {
-            text-align: center;
-        }
+/* Cursive font for welcome message */
+.cursive-font {
+    font-family: 'Your Cursive Font', cursive; /* Add your desired cursive font family */
+    font-size: 18px; /* Adjust font size */
+    margin-bottom: 5px; /* Adjust margin as needed */
+    cursor: pointer;
+}
 
-        /* Cursive font for welcome message */
-        .cursive-font {
-            font-family: 'Your Cursive Font', cursive; /* Add your desired cursive font family */
-            font-size: 18px; /* Adjust font size */
-            margin-bottom: 5px; /* Adjust margin as needed */
-        }
+/* Footer styles */
+.footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
 
-        /* Footer styles */
-        .footer {
-            background-color: #333;
-            color: white;
-            text-align: center;
-            padding: 10px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-        /* Content styles */
-        .content {
-            margin-left: 200px; /* Adjust the width of the side panel */
-            padding: 20px;
-        }
-        /* Side panel styles */
-        .side-panel {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #111;
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 60px;
-        }
-        .side-panel a {
-            padding: 8px 8px 8px 32px;
-            text-decoration: none;
-            font-size: 25px;
-            color: #818181;
-            display: block;
-            transition: 0.3s;
-        }
-        .side-panel a:hover {
-            color: #f1f1f1;
-        }
-        .side-panel .close-btn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-        }
-        /* Add a CSS style block to modify the sidebar text color */
-        .side-panel {
-            color: white; /* Change the text color to white */
-        }
+/* Content styles */
+.content {
+    margin-left: 200px; /* Adjust the width of the side panel */
+    padding: 20px;
+}
 
-        /* Style the list items */
-        #vehicleList {
-            list-style-type: none;
-            padding: 0;
-        }
+/* Side panel styles */
+.side-panel {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+}
 
-        #vehicleList li {
-            margin-bottom: 5px;
-            cursor: pointer;
-        }
+.side-panel a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+}
 
-        /* Add hover effect for better visibility */
-        #vehicleList li:hover {
-            background-color: lightgray;
-        }
-        /* Set text color in the content area */
-        .content {
-            color: black; /* Change the text color to black */
-        }
+.side-panel a:hover {
+    color: #f1f1f1;
+}
 
-        /* Add this to your existing styles.css or include it within a style tag in the HTML file */
-
-        /* Style for the image gallery container */
-        #imageGallery {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-evenly;
-            align-items: center;
-        }
-
-        /* Style for individual gallery images */
-        .gallery-image {
-            max-width: 100%;
-            height: auto;
-            margin: 10px; /* Adjust margin as needed */
-        }
+.side-panel .close-btn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+}
