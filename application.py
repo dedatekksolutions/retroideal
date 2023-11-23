@@ -3,6 +3,7 @@ from utilities.init import *
 from utilities.helpers import *
 from DBops import *
 from s3operations import *
+from apiops import *
 
 app = Flask(__name__)
 
@@ -159,7 +160,13 @@ def upload_image():
     except Exception as e:
         return jsonify({'error': str(e)})
 
+@app.route("/verify_image/<filename>", methods=["POST"])
+def verify_single_image(filename):
+    # Call the verify_image function with the filename passed in the URL
+    result = verify_image(filename)
+    return jsonify(result)
+
 if __name__ == "__main__":
-    #init()
+    init()
     #delete_resources()
     app.run(host='0.0.0.0')

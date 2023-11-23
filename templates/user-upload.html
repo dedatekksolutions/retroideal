@@ -43,7 +43,7 @@
                 <div class="image-container">
                     <img src="{{ image_url }}" alt="Vehicle Image" class="gallery-image">
                     <div class="image-buttons">
-                        <button onclick="verifyImage('{{ image_url }}')">Verify</button>
+                        <button onclick="verifySingleImage('{{ image_url }}')">Verify</button>
                         <button onclick="deleteImage('{{ image_url }}')">Delete</button>
                     </div>
                 </div>
@@ -58,10 +58,23 @@
     </div>
 <!-- Script to handle side panel open/close and load vehicle details -->
 <script>
-        function verifyImage(imageUrl) {
-        // Add logic to verify the specified image URL
-        console.log('Verifying image:', imageUrl);
-        // Perform actions to mark the image as verified or update in the system
+
+        function extractFilenameFromURL(imageUrl) {
+                // Split the image URL by '/' to get the filename
+                const parts = imageUrl.split('/');
+                const filename = parts[parts.length - 1];
+                verifySingleImage(filename);
+            }
+
+        function verifySingleImage(filename) {
+        fetch(`/verify_image/${filename}`, { method: 'POST' })
+            .then(response => response.json())
+            .then(result => {
+                console.log(result); // Handle the verification result here
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
     }
 
     function deleteImage(imageUrl) {
