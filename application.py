@@ -108,6 +108,14 @@ def approved_images():
     # If the user is not authenticated, redirect to the login page
     return redirect(url_for("display_users"))
 
+@app.route("/upload/<vehicle_id>")
+def upload_page(vehicle_id):
+    # Fetch additional details for the vehicle using the vehicle_id
+    vehicle_details = fetch_vehicle_by_id(vehicle_id)
+
+    # Render the upload page with the vehicle details
+    return render_template("user-upload.html", vehicle_details=vehicle_details)
+
 
 if __name__ == "__main__":
     #init()
