@@ -82,6 +82,32 @@ def logout():
     session.pop("user", None)
     return jsonify({"message": "Logout successful"})
 
+@app.route("/user_home/approved_images")
+def approved_images():
+    if "user" in session:
+        userid = session["user"]["userid"]
+        user = fetch_user_by_userid(userid)
+        
+        if user:
+            first_name = user.get("firstname")
+            last_name = user.get("lastname")
+
+            # Fetch image URLs for the user's vehicles
+            image_urls = fetch_images_by_userid(userid)
+
+            # Fetch all vehicle data for the user
+            vehicles = fetch_vehicles_by_userid(userid)
+
+            # Print statements for debugging
+            print("User:", user)
+            print("Image URLs:", image_urls)
+            print("Vehicles:", vehicles)
+
+            return render_template("user-home.html", first_name=first_name, last_name=last_name, image_urls=image_urls)
+
+    # If the user is not authenticated, redirect to the login page
+    return redirect(url_for("display_users"))
+
 
 if __name__ == "__main__":
     #init()
