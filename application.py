@@ -61,7 +61,7 @@ def user_home():
             last_name = user.get("lastname")
 
             # Fetch image URLs for the user's vehicles
-            image_urls = fetch_images_by_userid(userid)
+            image_urls = fetch_approved_images_by_userid(userid)
 
             # Fetch all vehicle data for the user
             vehicles = fetch_vehicles_by_userid(userid)
@@ -93,7 +93,7 @@ def approved_images():
             last_name = user.get("lastname")
 
             # Fetch image URLs for the user's vehicles
-            image_urls = fetch_images_by_userid(userid)
+            image_urls = fetch_approved_images_by_userid(userid)
 
             # Fetch all vehicle data for the user
             vehicles = fetch_vehicles_by_userid(userid)
@@ -108,14 +108,28 @@ def approved_images():
     # If the user is not authenticated, redirect to the login page
     return redirect(url_for("display_users"))
 
-@app.route("/upload/<vehicle_id>")
-def upload_page(vehicle_id):
-    # Fetch additional details for the vehicle using the vehicle_id
-    vehicle_details = fetch_vehicle_by_id(vehicle_id)
+@app.route("/upload/pending_images")
+def upload():
+    if "user" in session:
+        userid = session["user"]["userid"]
+        user = fetch_user_by_userid(userid)
+        
+        if user:
+            first_name = user.get("firstname")
+            last_name = user.get("lastname")
 
-    # Render the upload page with the vehicle details
-    return render_template("user-upload.html", vehicle_details=vehicle_details)
+            # Fetch image URLs for the user's vehicles
+            image_urls = fetch_pending_images_by_userid(userid)
 
+            # Fetch all vehicle data for the user
+            vehicles = fetch_vehicles_by_userid(userid)
+
+            # Print statements for debugging
+            print("User:", user)
+            print("Image URLs:", image_urls)
+            print("Vehicles:", vehicles)
+
+            return render_template("user-upload.html", first_name=first_name, last_name=last_name, image_urls=image_urls)
 
 if __name__ == "__main__":
     #init()

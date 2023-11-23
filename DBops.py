@@ -35,7 +35,7 @@ def fetch_users():
     response = table.scan()
     return response['Items']
 
-def fetch_images_by_userid(userid):
+def fetch_approved_images_by_userid(userid):
     dynamodb = boto3.resource('dynamodb')
     table = dynamodb.Table(vehicle_image_table)
 
@@ -52,10 +52,33 @@ def fetch_images_by_userid(userid):
         print(image_urls)
 
         return image_urls
-
     except Exception as e:
         print("Error fetching images:", e)
         return []
+
+def fetch_pending_images_by_userid(userid):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(vehicle_image_table)
+
+    try:
+        # Query the vehicle image table based on userid and status as "pending"
+        response = table.scan(
+            FilterExpression=Attr('userid').eq(userid) & Attr('status').eq('pending')
+        )
+        items = response['Items']
+
+        # Extract image URLs from the items
+        image_urls = [item['image-url'] for item in items]
+
+        # Print statements for debugging
+        print("Pending Image URLs for userid:", userid)
+        print(image_urls)
+
+        return image_urls
+    except Exception as e:
+        print("Error fetching pending images:", e)
+        return []
+
     
 def fetch_vehicles_by_userid(userid):
     dynamodb = boto3.resource('dynamodb')

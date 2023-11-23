@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous">
+
+
+</head>
+<body>
+    <header class="navbar">
+        <span style="font-size:30px;cursor:pointer" onclick="openSidePanel()">&#9776;</span>
+        <a href="/user_home/approved_images" style="text-decoration: none; color: white;">Approved Images</a>
+        <div class="banner-section">
+            <a href="/" style="text-decoration: none; color: white;">
+                <span class="retro-font">Retro Ideal</span>
+            </a>
+            <a href="/user_home" style="text-decoration: none; color: white;">
+                <p class="cursive-font">{{ first_name }}</p>
+            </a>            
+        </div>
+        <a href="/upload/pending_images" style="text-decoration: none; color: white;">Upload Image</a>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+    </header>
+    <div class="side-panel" id="sidePanel">
+        <a href="javascript:void(0)" class="close-btn" onclick="closeSidePanel()">&times;</a>
+        <!-- Display registration numbers for the user's vehicles -->
+        <h1>Vehicles</h1>
+        <div id="sidePanelContent"></div>
+    </div>
+    <div class="content" id="contentArea">
+        <div id="UploadComponent">
+            <h2>Upload Component</h2>
+            <form id="uploadForm">
+                <!-- File input for browsing -->
+                <input type="file" id="fileInput" accept="image/*" />
+                <!-- Upload button -->
+                <button type="button" onclick="uploadFile()">Upload</button>
+            </form>
+        </div>
+        <div id="imageGallery">
+            {% for image_url in image_urls %}
+                <img src="{{ image_url }}" alt="Vehicle Image" class="gallery-image">
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="footer">
+        <!-- Placeholder content in the footer -->
+        &copy; 2023 Your Company
+    </div>
+<!-- Script to handle side panel open/close and load vehicle details -->
+<script>
+    function openSidePanel() {
+        document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
+        loadVehicleDetails();
+    }
+
+    function closeSidePanel() {
+        document.getElementById("sidePanel").style.width = "0";
+    }
+
+    function loadVehicleDetails() {
+        const sidePanelContent = document.getElementById("sidePanelContent");
+
+        // Check if the user is authenticated
+        if (sidePanelContent && '{{ "user" in session }}') {
+            const userId = '{{ session["user"]["userid"] }}';
+
+            // Fetch registration numbers for the user's vehicles
+            fetch(`/user_home/${userId}/vehicles`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Log the data to the console for debugging
+                    console.log('Fetched data:', data);
+
+                    // Update the side panel with fetched registration numbers
+                    updateSidePanel(data);
+                })
+                .catch(error => {
+                    console.error('Failed to fetch vehicle details:', error);
+                });
+        }
+    }
+
+    function uploadFile() {
+        // Get the selected file
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+
+        // Get the filename
+        const filenameInput = document.getElementById('filenameInput');
+        const filename = filenameInput.value;
+
+        // Perform the file upload logic here (e.g., using Fetch API or FormData)
+
+        // For demonstration purposes, log the file details
+        console.log('File:', file);
+        console.log('Filename:', filename);
+
+        // You can implement the actual file upload logic here
+        // For example, you can use the Fetch API to send the file to the server
+        // and handle the upload on the server side.
+    }
+
+    function updateContentWithVehicleImages(vehicleId) {
+        const contentArea = document.getElementById("contentArea");
+        const welcomeMessage = document.getElementById("welcomeMessage");
+        const imageGallery = document.getElementById("imageGallery");
+
+        // Hide the welcome message
+        welcomeMessage.style.display = "none";
+
+        // Clear existing content in the image gallery
+        imageGallery.innerHTML = '';
+
+        // Fetch images for the selected vehicle
+        fetch(`/user_home/${vehicleId}/images`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(images => {
+                // Display images in the image gallery
+                images.forEach(imageUrl => {
+                    const img = document.createElement("img");
+                    img.src = imageUrl;
+                    img.alt = "Vehicle Image";
+                    img.classList.add("gallery-image");
+
+                    imageGallery.appendChild(img);
+                });
+            })
+            .catch(error => {
+                console.error('Failed to fetch vehicle images:', error);
+            });
+    }
+
+
+    function logout() {
+        // Clear the session data
+        fetch('/logout', { method: 'GET' })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Logout successful');
+                // Redirect to the login page or any other route as needed
+                window.location.href = '/login';
+            })
+            .catch(error => {
+                console.error('Logout failed:', error);
+            });
+    }
+
+    function redirectToUploadPage(vehicleId) {
+    // Redirect to the upload page with the vehicleId
+    window.location.href = `/upload/${vehicleId}`;
+}
+
+function updateSidePanel(vehicles) {
+    const sidePanelContent = document.getElementById("sidePanelContent");
+
+    if (sidePanelContent) {
+        // Clear existing content
+        sidePanelContent.innerHTML = '';
+
+        // Add new registration numbers to the side panel
+        vehicles.forEach(vehicle => {
+            const a = document.createElement("a");
+            a.href = '#';
+            a.onclick = function() {
+                // Update content with images for the selected vehicle
+                updateContentWithVehicleImages(vehicle.vh_id);
+            };
+
+            // Create a span for the registration number
+            const regSpan = document.createElement("span");
+            regSpan.appendChild(document.createTextNode(vehicle.reg));
+            a.appendChild(regSpan);
+
+            // Create a span for the "+" icon
+            const plusIcon = document.createElement("span");
+            plusIcon.innerHTML = '<i class="fas fa-plus" onclick="redirectToUploadPage(' + vehicle.vh_id + ')"></i>';
+            a.appendChild(plusIcon);
+
+            sidePanelContent.appendChild(a);
+        });
+    }
+}
+</script>
+
+</body>
+</html>
