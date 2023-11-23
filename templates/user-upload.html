@@ -42,9 +42,16 @@
         </div>
         <div id="imageGallery">
             {% for image_url in image_urls %}
-                <img src="{{ image_url }}" alt="Vehicle Image" class="gallery-image">
+                <div class="image-container">
+                    <img src="{{ image_url }}" alt="Vehicle Image" class="gallery-image">
+                    <div class="image-buttons">
+                        <button onclick="verifyImage('{{ image_url }}')">Verify</button>
+                        <button onclick="deleteImage('{{ image_url }}')">Delete</button>
+                    </div>
+                </div>
             {% endfor %}
         </div>
+        
     </div>
     
     <div class="footer">
@@ -53,6 +60,19 @@
     </div>
 <!-- Script to handle side panel open/close and load vehicle details -->
 <script>
+        function verifyImage(imageUrl) {
+        // Add logic to verify the specified image URL
+        console.log('Verifying image:', imageUrl);
+        // Perform actions to mark the image as verified or update in the system
+    }
+
+    function deleteImage(imageUrl) {
+        // Add logic to delete the specified image URL
+        console.log('Deleting image:', imageUrl);
+        // Perform actions to delete the image from your system or gallery
+    }
+
+
     function openSidePanel() {
         document.getElementById("sidePanel").style.width = "200px"; // Adjust the width as needed
         loadVehicleDetails();

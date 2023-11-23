@@ -76,3 +76,9 @@
     top: 0;
     right: 25px;
 }
+
+.gallery-image {
+    max-width: 25%;
+    height: auto; /* Maintain aspect ratio */
+    margin: 10px; /* Add margin between images */
+}
