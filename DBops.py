@@ -87,3 +87,25 @@ def fetch_vehicles_by_userid(userid):
     items = response['Items']
 
     return items
+
+def add_entry_to_vehicle_image_table(image_id, user_id, vehicle_id, image_url, status, purpose, filename):
+    dynamodb = boto3.client('dynamodb')
+    item = {
+        'image-id': {'S': image_id},
+        'userid': {'S': user_id},
+        'vehicle-id': {'S': vehicle_id},
+        'image-url': {'S': image_url},
+        'status': {'S': status},
+        'purpose': {'S': purpose},
+        'filename': {'S': filename}
+        # Add other attributes as needed
+    }
+
+    try:
+        response = dynamodb.put_item(
+            TableName=vehicle_image_table,
+            Item=item
+        )
+        return "Entry added to DynamoDB table"
+    except Exception as e:
+        return str(e)

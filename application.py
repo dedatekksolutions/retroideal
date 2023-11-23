@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request, url_for, session, j
 from utilities.init import *
 from utilities.helpers import *
 from DBops import *
+from s3operations import *
 
 app = Flask(__name__)
 
@@ -130,6 +131,33 @@ def upload():
             print("Vehicles:", vehicles)
 
             return render_template("user-upload.html", first_name=first_name, last_name=last_name, image_urls=image_urls)
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'})
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'})
+
+        if file:
+            if "user" in session:
+                user_id = session["user"]["userid"]  # Get user ID from session
+                vehicle_id = "placeholder"  # Placeholder for vehicle ID
+
+                result = upload_image_to_s3(file, user_id, vehicle_id)
+                if result == "Upload successful":
+                    return jsonify({'message': 'Image uploaded successfully'})
+                else:
+                    return jsonify({'error': result})
+            else:
+                return jsonify({'error': 'User not authenticated'})
+
+        return jsonify({'error': 'Failed to upload image'})
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 if __name__ == "__main__":
     #init()
