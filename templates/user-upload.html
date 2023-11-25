@@ -59,10 +59,36 @@
 <!-- Script to handle side panel open/close and load vehicle details -->
 <script>
         function verifyImage(imageUrl) {
-        // Add logic to verify the specified image URL
-        console.log('Verifying image:', imageUrl);
-        // Perform actions to mark the image as verified or update in the system
-    }
+    // Extract the filename from the image URL (assuming it's the last part after '/')
+    const filename = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+
+    // Create the payload with the filename
+    const payload = {
+        filename: [filename]
+    };
+
+    console.log('Sending verification request for filename:', filename);
+
+    // Make a fetch request to the desired API endpoint
+    fetch('https://ok9ogdv6x0.execute-api.us-east-1.amazonaws.com/prod/DynamoDBManager', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Handle the response data as needed
+        console.log('Verification response:', data);
+        // Perform actions based on the verification response
+    })
+    .catch(error => {
+        console.error('Verification error:', error);
+        // Handle errors from the API call
+    });
+}
+
 
     function deleteImage(imageUrl) {
         // Add logic to delete the specified image URL
